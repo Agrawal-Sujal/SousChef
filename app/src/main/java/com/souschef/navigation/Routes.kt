@@ -38,6 +38,12 @@ sealed interface Route {
 
     @Serializable
     data object Profile : Route
+
+    /**
+     * Development/Testing routes.
+     */
+    @Serializable
+    data object DesignTest : Route
 }
 
 /**

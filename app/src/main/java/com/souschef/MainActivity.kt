@@ -14,6 +14,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,9 +61,8 @@ fun SousChefApp() {
     // Google Sign-In helper
     val googleSignInHelper = GoogleSignInHelper(context)
 
-    // TODO: Replace with your Web Client ID from Firebase Console
-    // Go to Firebase Console > Authentication > Sign-in method > Google > Web SDK configuration
-    val webClientId = "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
+    // Web Client ID from local.properties via BuildConfig
+    val webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
 
     /**
      * Handle Google Sign-In flow.
@@ -118,10 +119,30 @@ fun SousChefApp() {
 
                 is AuthState.Authenticated -> {
                     val user = (authState as AuthState.Authenticated).user
-                    DashboardScreen(
-                        user = user,
-                        onSignOut = { viewModel.signOut() }
-                    )
+
+                    // Simple navigation state for authenticated screens
+                    val mainNavigationState = remember {
+                        mutableStateOf<Route>(Route.Dashboard)
+                    }
+
+                    when (mainNavigationState.value) {
+                        Route.DesignTest -> {
+                            DesignTestScreen(
+                                onNavigateBack = {
+                                    mainNavigationState.value = Route.Dashboard
+                                }
+                            )
+                        }
+                        else -> {
+                            DashboardScreen(
+                                user = user,
+                                onSignOut = { viewModel.signOut() },
+                                onNavigateToDesignTest = {
+                                    mainNavigationState.value = Route.DesignTest
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }

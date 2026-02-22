@@ -29,6 +29,7 @@ import com.souschef.ui.theme.GoldMuted
 fun DashboardScreen(
     user: User?,
     onSignOut: () -> Unit,
+    onNavigateToDesignTest: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -66,6 +67,13 @@ fun DashboardScreen(
         )
 
         Spacer(modifier = Modifier.height(48.dp))
+
+        SecondaryButton(
+            text = "View Design System",
+            onClick = onNavigateToDesignTest
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         SecondaryButton(
             text = "Sign Out",
