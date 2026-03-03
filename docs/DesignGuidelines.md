@@ -1309,6 +1309,291 @@ Sticky Bottom Bar (56dp height)
 
 ---
 
+## 🧩 Reusable UI Components Library
+
+All reusable components are located in `com.souschef.ui.components.PremiumComponents.kt`.
+
+### Theme-Aware Colors (AppColors)
+
+Use `AppColors` for all theme-aware color access. Located in `Theme.kt`.
+
+```kotlin
+// Instead of hardcoding:
+Text(color = Color(0xFF1A1A1A))
+
+// Use AppColors:
+Text(color = AppColors.textPrimary())
+
+// Common color accessors:
+AppColors.gold()              // Primary gold accent
+AppColors.onGold()            // Color for text/icons on gold
+AppColors.textPrimary()       // Main text color
+AppColors.textSecondary()     // Body/description text
+AppColors.textTertiary()      // Labels/metadata
+AppColors.cardBackground()    // Card container color
+AppColors.heroBackground()    // Always dark (for drama)
+AppColors.glassBackground()   // Glass effect background
+AppColors.border()            // Border color
+AppColors.divider()           // Divider line color
+AppColors.success()           // Success semantic color
+AppColors.error()             // Error semantic color
+AppColors.warning()           // Warning semantic color
+AppColors.info()              // Info semantic color
+AppColors.accentGreen()       // Green accent
+AppColors.accentTerracotta()  // Terracotta accent
+AppColors.accentBurgundy()    // Burgundy accent
+AppColors.goldBackground()    // Subtle gold-tinted background
+```
+
+### Premium Buttons
+
+#### PremiumButton (Primary CTA)
+```kotlin
+import com.souschef.ui.components.PremiumButton
+
+PremiumButton(
+    text = "Reserve Table",
+    onClick = { /* action */ },
+    enabled = true,
+    isLoading = false,
+    leadingIcon = Icons.Default.Restaurant
+)
+```
+**Use for:** Main actions - Book, Reserve, Purchase, Sign In
+
+#### PremiumOutlinedButton (Secondary)
+```kotlin
+import com.souschef.ui.components.PremiumOutlinedButton
+
+PremiumOutlinedButton(
+    text = "View Menu",
+    onClick = { /* action */ }
+)
+```
+**Use for:** Alternative actions - View Details, Learn More
+
+#### PremiumTextButton (Tertiary)
+```kotlin
+import com.souschef.ui.components.PremiumTextButton
+
+PremiumTextButton(
+    text = "Cancel",
+    onClick = { /* action */ }
+)
+```
+**Use for:** Dismiss, Cancel, Skip
+
+#### PremiumSmallButton (Inline)
+```kotlin
+import com.souschef.ui.components.PremiumSmallButton
+
+PremiumSmallButton(
+    text = "Add",
+    onClick = { /* action */ }
+)
+```
+**Use for:** Inline actions, compact spaces
+
+#### PremiumGradientButton (Hero CTAs)
+```kotlin
+import com.souschef.ui.components.PremiumGradientButton
+
+PremiumGradientButton(
+    text = "Book Now",
+    onClick = { /* action */ },
+    leadingIcon = Icons.Default.ArrowForward
+)
+```
+**Use for:** Hero sections, featured content CTAs
+
+### Premium Cards
+
+#### PremiumCard (Standard)
+```kotlin
+import com.souschef.ui.components.PremiumCard
+
+PremiumCard {
+    Text("Card content")
+}
+```
+**Use for:** Most content cards, lists
+
+#### PremiumBorderedCard
+```kotlin
+import com.souschef.ui.components.PremiumBorderedCard
+
+PremiumBorderedCard {
+    Text("Bordered card content")
+}
+```
+**Use for:** Secondary sections, visual separation needed
+
+#### PremiumElevatedCard
+```kotlin
+import com.souschef.ui.components.PremiumElevatedCard
+
+PremiumElevatedCard(elevation = 8.dp) {
+    Text("Important content")
+}
+```
+**Use for:** Featured/important content that needs emphasis
+
+#### PremiumGlassCard
+```kotlin
+import com.souschef.ui.components.PremiumGlassCard
+
+PremiumGlassCard {
+    Text("Premium content")
+}
+```
+**Use for:** Featured/premium sections. **LIMIT: 1-2 per screen**
+
+#### PremiumHeroCard
+```kotlin
+import com.souschef.ui.components.PremiumHeroCard
+
+PremiumHeroCard {
+    Column {
+        Text("Experience", style = MaterialTheme.typography.headlineLarge, color = Color.White)
+        Text("Culinary Excellence", color = Color.White)
+    }
+}
+```
+**Use for:** Hero sections, dramatic dark backgrounds
+
+#### PremiumGoldAccentCard
+```kotlin
+import com.souschef.ui.components.PremiumGoldAccentCard
+
+PremiumGoldAccentCard {
+    Text("Reservation Confirmed")
+}
+```
+**Use for:** Confirmations, premium features, reservations
+
+### Badges & Tags
+
+#### PremiumBadge
+```kotlin
+import com.souschef.ui.components.PremiumBadge
+import com.souschef.ui.components.BadgeType
+
+PremiumBadge(text = "Michelin Star", type = BadgeType.GOLD)
+PremiumBadge(text = "Top Rated", type = BadgeType.DARK)
+PremiumBadge(text = "New", type = BadgeType.SUCCESS)
+PremiumBadge(text = "Limited", type = BadgeType.ACCENT)
+```
+**Badge Types:**
+- `GOLD` - Gold gradient background
+- `DARK` - Dark background, gold text
+- `SUCCESS` - Green gradient
+- `ACCENT` - Terracotta/burgundy gradient
+
+#### PremiumTag
+```kotlin
+import com.souschef.ui.components.PremiumTag
+
+PremiumTag(text = "Vegetarian", color = AppColors.accentGreen())
+PremiumTag(text = "French", color = AppColors.accentBurgundy())
+```
+**Use for:** Categories, dietary tags, cuisine types
+
+#### PremiumStatusTag
+```kotlin
+import com.souschef.ui.components.PremiumStatusTag
+
+PremiumStatusTag(text = "Available", color = AppColors.success())
+PremiumStatusTag(text = "Sold Out", color = AppColors.error())
+```
+**Use for:** Availability, status indicators
+
+### Section Components
+
+#### PremiumSectionHeader
+```kotlin
+import com.souschef.ui.components.PremiumSectionHeader
+
+PremiumSectionHeader(
+    title = "Featured Restaurants",
+    action = {
+        TextButton(onClick = {}) { Text("See All") }
+    }
+)
+```
+
+#### PremiumSubsectionLabel
+```kotlin
+import com.souschef.ui.components.PremiumSubsectionLabel
+
+PremiumSubsectionLabel(label = "Popular in your area")
+```
+
+### List Components
+
+#### PremiumListItem
+```kotlin
+import com.souschef.ui.components.PremiumListItem
+
+PremiumListItem(
+    title = "Truffle Risotto",
+    subtitle = "Creamy arborio rice with black truffle",
+    price = "$42",
+    leadingContent = {
+        AsyncImage(model = imageUrl, ...)
+    }
+)
+```
+
+### Dividers
+
+#### PremiumDivider
+```kotlin
+import com.souschef.ui.components.PremiumDivider
+
+PremiumDivider()
+```
+
+#### PremiumDottedDivider
+```kotlin
+import com.souschef.ui.components.PremiumDottedDivider
+
+PremiumDottedDivider(dotCount = 30)
+```
+**Use for:** Decorative separation, tickets, confirmations
+
+---
+
+## 🎨 Color System Reference
+
+### Light vs Dark Theme Colors
+
+| Purpose | Light Mode | Dark Mode |
+|---------|------------|-----------|
+| **Background** | IvoryWhite `#FAF9F7` | CharcoalDeep `#121212` |
+| **Card Background** | White `#FFFFFF` | CharcoalMedium `#1E1E1E` |
+| **Card Elevated** | White `#FFFFFF` | CharcoalLight `#2C2C2C` |
+| **Primary Gold** | GoldVibrant `#FFB800` | GoldVibrant `#FFB800` |
+| **Text Primary** | `#1A1A1A` | `#FAFAFA` |
+| **Text Secondary** | `#5C5C5C` | `#B8B8B8` |
+| **Text Tertiary** | `#8A8A8A` | `#787878` |
+| **Border** | `#E0E0E0` | `#3A3A3A` |
+| **Divider** | `#EEEEEE` | `#2A2A2A` |
+| **Success** | `#4CAF50` | `#81C784` |
+| **Error** | `#E53935` | `#EF5350` |
+| **Warning** | `#FF9800` | `#FFB74D` |
+| **Info** | `#2196F3` | `#64B5F6` |
+
+### Accent Colors (Same in Both Themes)
+| Color | Hex | Use Case |
+|-------|-----|----------|
+| SageGreen | `#66BB6A` | Vegetarian, organic, success |
+| TerracottaVibrant | `#EF5350` | Limited, special offers |
+| DeepBurgundy | `#8E2441` | Wine, premium |
+| TealVibrant | `#26A69A` | Fresh, variety |
+| DeepOlive | `#558B2F` | Farm-to-table |
+
+---
+
 ## 🔍 LLM Prompt Template
 
 When asking an LLM to generate UI code based on these guidelines:

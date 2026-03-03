@@ -252,32 +252,32 @@ object CustomShapes {
 
 /**
  * Light Theme Color Scheme
- * Premium, airy, and sophisticated
+ * Premium, airy, and sophisticated with vibrant gold
  */
 private val LightColorScheme = lightColorScheme(
-    // Primary - Gold accents
-    primary = GoldMuted,
-    onPrimary = Color.White,
-    primaryContainer = ChampagneGold,
+    // Primary - Vibrant Gold accents
+    primary = GoldVibrant,
+    onPrimary = CharcoalDeep,
+    primaryContainer = GoldPale,
     onPrimaryContainer = CharcoalDeep,
 
-    // Secondary - Sage green
+    // Secondary - Vibrant Sage green
     secondary = SageGreen,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFE8F0E3),
+    secondaryContainer = Color(0xFFE8F5E9),
     onSecondaryContainer = DeepOlive,
 
-    // Tertiary - Terracotta
-    tertiary = TerracottaMuted,
+    // Tertiary - Vibrant Terracotta
+    tertiary = TerracottaVibrant,
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFF5E8E3),
+    tertiaryContainer = Color(0xFFFFEBEE),
     onTertiaryContainer = DeepBurgundy,
 
     // Error
     error = ErrorLight,
     onError = Color.White,
-    errorContainer = Color(0xFFFCE4E4),
-    onErrorContainer = ErrorDark,
+    errorContainer = Color(0xFFFFCDD2),
+    onErrorContainer = RubyRed,
 
     // Background & Surface
     background = IvoryWhite,
@@ -286,7 +286,7 @@ private val LightColorScheme = lightColorScheme(
     onSurface = TextPrimaryLight,
     surfaceVariant = SurfaceVariantLight,
     onSurfaceVariant = TextSecondaryLight,
-    surfaceTint = GoldMuted,
+    surfaceTint = GoldVibrant,
 
     // Outline & Border
     outline = OutlineLight,
@@ -303,32 +303,32 @@ private val LightColorScheme = lightColorScheme(
 
 /**
  * Dark Theme Color Scheme
- * Sophisticated, dramatic, and premium
+ * Sophisticated, dramatic, and premium with vibrant gold
  */
 private val DarkColorScheme = darkColorScheme(
-    // Primary - Gold accents (lighter in dark mode)
-    primary = GoldLight,
+    // Primary - Vibrant Gold (same vibrant gold works great on dark)
+    primary = GoldVibrant,
     onPrimary = CharcoalDeep,
-    primaryContainer = GoldDark,
+    primaryContainer = GoldRich,
     onPrimaryContainer = ChampagneGold,
 
     // Secondary - Sage green
     secondary = SageGreen,
     onSecondary = CharcoalDeep,
     secondaryContainer = DeepOlive,
-    onSecondaryContainer = Color(0xFFE8F0E3),
+    onSecondaryContainer = Color(0xFFE8F5E9),
 
     // Tertiary - Terracotta
-    tertiary = TerracottaMuted,
+    tertiary = TerracottaVibrant,
     onTertiary = CharcoalDeep,
     tertiaryContainer = DeepBurgundy,
-    onTertiaryContainer = Color(0xFFF5E8E3),
+    onTertiaryContainer = Color(0xFFFFEBEE),
 
     // Error
-    error = ErrorLight,
+    error = ErrorDark,
     onError = CharcoalDeep,
-    errorContainer = ErrorDark,
-    onErrorContainer = Color(0xFFFCE4E4),
+    errorContainer = RubyRed,
+    onErrorContainer = Color(0xFFFFCDD2),
 
     // Background & Surface
     background = CharcoalDeep,
@@ -337,7 +337,7 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = TextPrimaryDark,
     surfaceVariant = SurfaceVariantDark,
     onSurfaceVariant = TextSecondaryDark,
-    surfaceTint = GoldLight,
+    surfaceTint = GoldVibrant,
 
     // Outline & Border
     outline = OutlineDark,
@@ -346,7 +346,7 @@ private val DarkColorScheme = darkColorScheme(
     // Inverse
     inverseSurface = IvoryWhite,
     inverseOnSurface = TextPrimaryLight,
-    inversePrimary = GoldMuted,
+    inversePrimary = GoldRich,
 
     // Scrim
     scrim = Color.Black.copy(alpha = 0.5f)
@@ -403,10 +403,31 @@ fun SousChefTheme(
 // ============================================
 
 /**
- * Extended color properties for premium features
- * Access via MaterialTheme.colorScheme.extension
+ * Extended color properties for premium features.
+ * Use these for theme-aware colors that aren't in MaterialTheme.colorScheme.
  */
 object ThemeExtensions {
+
+    /**
+     * Primary gold color - use this for main accents
+     */
+    @Composable
+    fun goldPrimary(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return GoldVibrant // Same vibrant gold works for both themes
+    }
+
+    @Composable
+    fun goldSecondary(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) GoldLight else GoldRich
+    }
+
+    @Composable
+    fun goldOnDark(): Color = GoldVibrant
+
+    @Composable
+    fun goldBackground(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) GoldRich.copy(alpha = 0.15f) else GoldPale
+    }
 
     /**
      * Glass effect colors
@@ -417,8 +438,36 @@ object ThemeExtensions {
     }
 
     @Composable
+    fun glassBackgroundSubtle(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) GlassDarkSoft else GlassWhiteSoft
+    }
+
+    @Composable
     fun glassBorder(darkTheme: Boolean = isSystemInDarkTheme()): Color {
-        return if (darkTheme) BorderDark else BorderLight
+        return if (darkTheme) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.08f)
+    }
+
+    @Composable
+    fun glassBorderGold(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) GoldVibrant.copy(alpha = 0.3f) else GoldRich.copy(alpha = 0.3f)
+    }
+
+    /**
+     * Text colors for on-surface content
+     */
+    @Composable
+    fun textPrimary(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) TextPrimaryDark else TextPrimaryLight
+    }
+
+    @Composable
+    fun textSecondary(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) TextSecondaryDark else TextSecondaryLight
+    }
+
+    @Composable
+    fun textTertiary(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) TextTertiaryDark else TextTertiaryLight
     }
 
     /**
@@ -448,6 +497,91 @@ object ThemeExtensions {
     }
 
     /**
+     * Card backgrounds
+     */
+    @Composable
+    fun cardBackground(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) CharcoalMedium else Color.White
+    }
+
+    @Composable
+    fun cardBackgroundElevated(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) CharcoalLight else Color.White
+    }
+
+    /**
+     * Dark/Light surface for hero sections
+     */
+    @Composable
+    fun heroBackground(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return CharcoalDeep // Always dark for dramatic effect
+    }
+
+    @Composable
+    fun heroBackgroundAlt(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) CharcoalMedium else CharcoalDeep
+    }
+
+    /**
+     * Semantic colors
+     */
+    @Composable
+    fun success(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) SuccessDark else SuccessLight
+    }
+
+    @Composable
+    fun error(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) ErrorDark else ErrorLight
+    }
+
+    @Composable
+    fun warning(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) WarningDark else WarningLight
+    }
+
+    @Composable
+    fun info(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) InfoDark else InfoLight
+    }
+
+    /**
+     * Accent colors
+     */
+    @Composable
+    fun accentGreen(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return SageGreen
+    }
+
+    @Composable
+    fun accentTerracotta(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return TerracottaVibrant
+    }
+
+    @Composable
+    fun accentBurgundy(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return DeepBurgundy
+    }
+
+    @Composable
+    fun accentTeal(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return TealVibrant
+    }
+
+    /**
+     * Dividers and borders
+     */
+    @Composable
+    fun divider(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) DividerDark else DividerLight
+    }
+
+    @Composable
+    fun border(darkTheme: Boolean = isSystemInDarkTheme()): Color {
+        return if (darkTheme) BorderDark else BorderLight
+    }
+
+    /**
      * Hover and interactive states
      */
     @Composable
@@ -459,11 +593,250 @@ object ThemeExtensions {
     fun pressed(darkTheme: Boolean = isSystemInDarkTheme()): Color {
         return if (darkTheme) PressedDark else PressedLight
     }
+
+    /**
+     * Gradient helpers - return gradient colors based on theme
+     */
+    @Composable
+    fun gradientGold(): List<Color> = GradientGold
+
+    @Composable
+    fun gradientGoldVibrant(): List<Color> = GradientGoldVibrant
+
+    @Composable
+    fun gradientDark(): List<Color> = GradientDarkElegant
+
+    @Composable
+    fun gradientSurface(darkTheme: Boolean = isSystemInDarkTheme()): List<Color> {
+        return if (darkTheme) GradientCharcoal else GradientNeutral
+    }
+}
+
+// ============================================
+// APP COLORS - SIMPLIFIED THEME-AWARE ACCESS
+// ============================================
+
+/**
+ * Simplified color access for the entire app.
+ * Use AppColors.xxx() to get the correct color for current theme.
+ *
+ * Example:
+ *   Text(color = AppColors.textPrimary())
+ *   Box(modifier = Modifier.background(AppColors.cardBackground()))
+ */
+object AppColors {
+
+    // ==========================================
+    // PRIMARY GOLD
+    // ==========================================
+
+    /** Primary gold accent color - same for both themes */
+    @Composable
+    fun gold(): Color = GoldVibrant
+
+    /** Color to use ON gold backgrounds (dark text on gold) */
+    @Composable
+    fun onGold(): Color = CharcoalDeep
+
+    /** Secondary gold (slightly different shade) */
+    @Composable
+    fun goldSecondary(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) GoldLight else GoldRich
+
+    /** Gold-tinted background for cards */
+    @Composable
+    fun goldBackground(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) GoldRich.copy(alpha = 0.15f) else GoldPale
+
+    // ==========================================
+    // TEXT COLORS
+    // ==========================================
+
+    /** Primary text - headings, important text */
+    @Composable
+    fun textPrimary(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) TextPrimaryDark else TextPrimaryLight
+
+    /** Secondary text - body, descriptions */
+    @Composable
+    fun textSecondary(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) TextSecondaryDark else TextSecondaryLight
+
+    /** Tertiary text - captions, metadata, labels */
+    @Composable
+    fun textTertiary(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) TextTertiaryDark else TextTertiaryLight
+
+    /** Disabled text */
+    @Composable
+    fun textDisabled(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) TextDisabledDark else TextDisabledLight
+
+    /** Text on dark backgrounds (always white) */
+    @Composable
+    fun textOnDark(): Color = Color.White
+
+    // ==========================================
+    // BACKGROUNDS & SURFACES
+    // ==========================================
+
+    /** Main screen background */
+    @Composable
+    fun background(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) CharcoalDeep else IvoryWhite
+
+    /** Card background */
+    @Composable
+    fun cardBackground(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) CharcoalMedium else Color.White
+
+    /** Elevated card background */
+    @Composable
+    fun cardBackgroundElevated(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) CharcoalLight else Color.White
+
+    /** Hero section background (always dark for dramatic effect) */
+    @Composable
+    fun heroBackground(): Color = CharcoalDeep
+
+    /** Alternate hero background */
+    @Composable
+    fun heroBackgroundAlt(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) CharcoalMedium else CharcoalLight
+
+    /** Surface color for inputs, forms */
+    @Composable
+    fun surface(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) SurfaceDark else SurfaceLight
+
+    /** Surface variant for secondary areas */
+    @Composable
+    fun surfaceVariant(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) SurfaceVariantDark else SurfaceVariantLight
+
+    // ==========================================
+    // GLASS EFFECTS
+    // ==========================================
+
+    /** Glass card background */
+    @Composable
+    fun glassBackground(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) GlassDark else GlassWhite
+
+    /** Glass card border */
+    @Composable
+    fun glassBorder(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.08f)
+
+    /** Glass border with gold tint */
+    @Composable
+    fun glassBorderGold(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) GoldVibrant.copy(alpha = 0.3f) else GoldRich.copy(alpha = 0.3f)
+
+    // ==========================================
+    // BORDERS & DIVIDERS
+    // ==========================================
+
+    /** Standard border */
+    @Composable
+    fun border(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) BorderDark else BorderLight
+
+    /** Divider line */
+    @Composable
+    fun divider(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) DividerDark else DividerLight
+
+    /** Outline (more visible than border) */
+    @Composable
+    fun outline(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) OutlineDark else OutlineLight
+
+    // ==========================================
+    // SEMANTIC COLORS
+    // ==========================================
+
+    /** Success state */
+    @Composable
+    fun success(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) SuccessDark else SuccessLight
+
+    /** Error state */
+    @Composable
+    fun error(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) ErrorDark else ErrorLight
+
+    /** Warning state */
+    @Composable
+    fun warning(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) WarningDark else WarningLight
+
+    /** Info state */
+    @Composable
+    fun info(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) InfoDark else InfoLight
+
+    // ==========================================
+    // ACCENT COLORS
+    // ==========================================
+
+    /** Green accent (vegetarian, organic, success) */
+    @Composable
+    fun accentGreen(): Color = SageGreen
+
+    /** Terracotta accent (limited, special offers) */
+    @Composable
+    fun accentTerracotta(): Color = TerracottaVibrant
+
+    /** Burgundy accent (wine, premium) */
+    @Composable
+    fun accentBurgundy(): Color = DeepBurgundy
+
+    /** Teal accent (fresh, variety) */
+    @Composable
+    fun accentTeal(): Color = TealVibrant
+
+    /** Olive accent (organic, farm-to-table) */
+    @Composable
+    fun accentOlive(): Color = DeepOlive
+
+    // ==========================================
+    // INTERACTIVE STATES
+    // ==========================================
+
+    /** Hover overlay */
+    @Composable
+    fun hover(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) HoverDark else HoverLight
+
+    /** Press overlay */
+    @Composable
+    fun pressed(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) PressedDark else PressedLight
+
+    // ==========================================
+    // GRAYS (THEME-AWARE)
+    // ==========================================
+
+    /** Light gray for backgrounds */
+    @Composable
+    fun grayLight(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) Gray800 else Gray100
+
+    /** Medium gray for icons, secondary elements */
+    @Composable
+    fun grayMedium(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) Gray500 else Gray500
+
+    /** Dark gray for emphasized elements in light mode */
+    @Composable
+    fun grayDark(darkTheme: Boolean = isSystemInDarkTheme()): Color =
+        if (darkTheme) Gray300 else Gray700
 }
 
 // ============================================
 // USAGE EXAMPLES
-// ============================================
+// ==========================================
 
 /**
  * Example: Glass Card

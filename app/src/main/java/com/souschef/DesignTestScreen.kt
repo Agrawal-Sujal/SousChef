@@ -77,25 +77,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.souschef.ui.theme.BorderLight
-import com.souschef.ui.theme.ChampagneGold
+import com.souschef.ui.theme.AppColors
 import com.souschef.ui.theme.CharcoalDeep
+import com.souschef.ui.theme.CharcoalLight
+import com.souschef.ui.theme.CharcoalMedium
 import com.souschef.ui.theme.CustomShapes
 import com.souschef.ui.theme.DeepBurgundy
 import com.souschef.ui.theme.DeepOlive
 import com.souschef.ui.theme.DividerLight
 import com.souschef.ui.theme.ErrorLight
+import com.souschef.ui.theme.GlassDark
 import com.souschef.ui.theme.GlassWhite
-import com.souschef.ui.theme.GlassWhiteLight
-import com.souschef.ui.theme.GoldDark
 import com.souschef.ui.theme.GoldLight
-import com.souschef.ui.theme.GoldMuted
+import com.souschef.ui.theme.GoldRich
+import com.souschef.ui.theme.GoldVibrant
 import com.souschef.ui.theme.GradientGold
 import com.souschef.ui.theme.GradientImageOverlay
 import com.souschef.ui.theme.Gray100
@@ -104,14 +106,19 @@ import com.souschef.ui.theme.Gray300
 import com.souschef.ui.theme.Gray400
 import com.souschef.ui.theme.Gray500
 import com.souschef.ui.theme.InfoLight
-import com.souschef.ui.theme.IvoryWhite
 import com.souschef.ui.theme.SageGreen
 import com.souschef.ui.theme.SuccessLight
-import com.souschef.ui.theme.TerracottaMuted
-import com.souschef.ui.theme.TextPrimaryLight
+import com.souschef.ui.theme.TerracottaVibrant
 import com.souschef.ui.theme.TextSecondaryLight
 import com.souschef.ui.theme.TextTertiaryLight
 import com.souschef.ui.theme.WarningLight
+import com.souschef.ui.theme.BorderLight
+import com.souschef.ui.theme.ChampagneGold
+
+// Alias for GoldMuted - now points to the new vibrant gold
+private val GoldMuted = GoldVibrant
+// Alias for TerracottaMuted - now points to the new vibrant terracotta
+private val TerracottaMuted = TerracottaVibrant
 
 /**
  * Design Test Screen
@@ -343,7 +350,7 @@ private fun SubsectionLabel(label: String) {
     Text(
         text = label,
         style = MaterialTheme.typography.labelMedium,
-        color = TextTertiaryLight,
+        color = AppColors.textTertiary(),
         modifier = Modifier.padding(bottom = 8.dp)
     )
 }
@@ -396,6 +403,10 @@ private fun PremiumGlassmorphismSection() {
 
 @Composable
 private fun PremiumHeroCard() {
+    val goldColor = AppColors.gold()
+    val heroBackground = AppColors.heroBackground()
+    val heroBackgroundAlt = AppColors.heroBackgroundAlt()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -409,9 +420,9 @@ private fun PremiumHeroCard() {
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            CharcoalDeep,
-                            Color(0xFF2D2D2D),
-                            CharcoalDeep
+                            heroBackground,
+                            heroBackgroundAlt,
+                            heroBackground
                         )
                     )
                 )
@@ -425,7 +436,7 @@ private fun PremiumHeroCard() {
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            GoldMuted.copy(alpha = 0.3f),
+                            goldColor.copy(alpha = 0.3f),
                             Color.Transparent
                         )
                     ),
@@ -441,7 +452,7 @@ private fun PremiumHeroCard() {
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            GoldMuted.copy(alpha = 0.2f),
+                            goldColor.copy(alpha = 0.2f),
                             Color.Transparent
                         )
                     ),
@@ -456,7 +467,7 @@ private fun PremiumHeroCard() {
                 .padding(20.dp)
                 .align(Alignment.Center)
                 .clip(RoundedCornerShape(20.dp))
-                .background(GlassWhite.copy(alpha = 0.1f))
+                .background(Color.White.copy(alpha = 0.1f))
                 .border(
                     width = 1.dp,
                     color = Color.White.copy(alpha = 0.2f),
@@ -471,14 +482,14 @@ private fun PremiumHeroCard() {
                     Icon(
                         imageVector = Icons.Default.Star,
                         contentDescription = null,
-                        tint = GoldMuted,
+                        tint = goldColor,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "MICHELIN GUIDE",
                         style = MaterialTheme.typography.labelMedium,
-                        color = GoldMuted,
+                        color = goldColor,
                         letterSpacing = 2.sp
                     )
                 }
@@ -506,8 +517,8 @@ private fun PremiumHeroCard() {
                 Button(
                     onClick = { },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = GoldMuted,
-                        contentColor = CharcoalDeep
+                        containerColor = goldColor,
+                        contentColor = heroBackground
                     ),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
@@ -531,6 +542,10 @@ private fun PremiumHeroCard() {
 
 @Composable
 private fun FeaturedRestaurantGlassCard() {
+    val isDark = isSystemInDarkTheme()
+    val goldColor = AppColors.gold()
+    val heroBackground = AppColors.heroBackground()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -573,7 +588,7 @@ private fun FeaturedRestaurantGlassCard() {
                 .align(Alignment.BottomCenter)
                 .padding(12.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(GlassWhite.copy(alpha = 0.15f))
+                .background(Color.White.copy(alpha = 0.15f))
                 .border(
                     width = 0.5.dp,
                     color = Color.White.copy(alpha = 0.3f),
@@ -598,7 +613,7 @@ private fun FeaturedRestaurantGlassCard() {
                         Icon(
                             imageVector = Icons.Outlined.Verified,
                             contentDescription = "Verified",
-                            tint = GoldMuted,
+                            tint = goldColor,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -623,21 +638,21 @@ private fun FeaturedRestaurantGlassCard() {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(GoldMuted)
+                        .background(goldColor)
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Star,
                             contentDescription = null,
-                            tint = CharcoalDeep,
+                            tint = heroBackground,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "4.9",
                             style = MaterialTheme.typography.labelMedium,
-                            color = CharcoalDeep,
+                            color = heroBackground,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -650,10 +665,10 @@ private fun FeaturedRestaurantGlassCard() {
             modifier = Modifier
                 .padding(12.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(GlassWhite.copy(alpha = 0.2f))
+                .background(Color.White.copy(alpha = 0.2f))
                 .border(
                     width = 0.5.dp,
-                    color = GoldMuted.copy(alpha = 0.5f),
+                    color = goldColor.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(8.dp)
                 )
                 .padding(horizontal = 10.dp, vertical = 6.dp)
@@ -662,26 +677,26 @@ private fun FeaturedRestaurantGlassCard() {
                 Icon(
                     imageVector = Icons.Default.Star,
                     contentDescription = null,
-                    tint = GoldMuted,
+                    tint = goldColor,
                     modifier = Modifier.size(12.dp)
                 )
                 Icon(
                     imageVector = Icons.Default.Star,
                     contentDescription = null,
-                    tint = GoldMuted,
+                    tint = goldColor,
                     modifier = Modifier.size(12.dp)
                 )
                 Icon(
                     imageVector = Icons.Default.Star,
                     contentDescription = null,
-                    tint = GoldMuted,
+                    tint = goldColor,
                     modifier = Modifier.size(12.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "3 Stars",
                     style = MaterialTheme.typography.labelSmall,
-                    color = GoldMuted,
+                    color = goldColor,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -691,6 +706,14 @@ private fun FeaturedRestaurantGlassCard() {
 
 @Composable
 private fun ReservationGlassCard() {
+    val isDark = isSystemInDarkTheme()
+    val goldColor = AppColors.gold()
+    val textPrimary = AppColors.textPrimary()
+    val textTertiary = AppColors.textTertiary()
+    val heroBackground = AppColors.heroBackground()
+    val cardBackground = if (isDark) CharcoalMedium else Color.White
+    val goldBackground = AppColors.goldBackground()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -698,9 +721,9 @@ private fun ReservationGlassCard() {
             .background(
                 Brush.linearGradient(
                     colors = listOf(
-                        GoldMuted.copy(alpha = 0.1f),
-                        ChampagneGold.copy(alpha = 0.3f),
-                        GoldMuted.copy(alpha = 0.1f)
+                        goldColor.copy(alpha = 0.1f),
+                        goldBackground,
+                        goldColor.copy(alpha = 0.1f)
                     )
                 )
             )
@@ -708,9 +731,9 @@ private fun ReservationGlassCard() {
                 width = 1.dp,
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        GoldMuted.copy(alpha = 0.5f),
-                        GoldMuted.copy(alpha = 0.2f),
-                        GoldMuted.copy(alpha = 0.5f)
+                        goldColor.copy(alpha = 0.5f),
+                        goldColor.copy(alpha = 0.2f),
+                        goldColor.copy(alpha = 0.5f)
                     )
                 ),
                 shape = RoundedCornerShape(20.dp)
@@ -727,14 +750,14 @@ private fun ReservationGlassCard() {
                     Text(
                         text = "Reservation Confirmed",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimaryLight,
+                        color = textPrimary,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Le Petit Château",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = GoldDark,
+                        color = GoldRich,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -751,7 +774,7 @@ private fun ReservationGlassCard() {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
-                        tint = CharcoalDeep,
+                        tint = heroBackground,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -768,7 +791,7 @@ private fun ReservationGlassCard() {
                     Box(
                         modifier = Modifier
                             .size(4.dp)
-                            .background(GoldMuted.copy(alpha = 0.3f), CircleShape)
+                            .background(goldColor.copy(alpha = 0.3f), CircleShape)
                     )
                     if (it < 29) Spacer(modifier = Modifier.width(6.dp))
                 }
@@ -783,17 +806,26 @@ private fun ReservationGlassCard() {
                 ReservationDetail(
                     icon = Icons.Outlined.AccessTime,
                     label = "Time",
-                    value = "7:30 PM"
+                    value = "7:30 PM",
+                    goldColor = goldColor,
+                    textPrimary = textPrimary,
+                    textTertiary = textTertiary
                 )
                 ReservationDetail(
                     icon = Icons.Outlined.Person,
                     label = "Guests",
-                    value = "2 People"
+                    value = "2 People",
+                    goldColor = goldColor,
+                    textPrimary = textPrimary,
+                    textTertiary = textTertiary
                 )
                 ReservationDetail(
                     icon = Icons.Outlined.LocalDining,
                     label = "Table",
-                    value = "Window"
+                    value = "Window",
+                    goldColor = goldColor,
+                    textPrimary = textPrimary,
+                    textTertiary = textTertiary
                 )
             }
 
@@ -802,7 +834,7 @@ private fun ReservationGlassCard() {
             Text(
                 text = "Tonight, February 22",
                 style = MaterialTheme.typography.titleMedium,
-                color = TextPrimaryLight,
+                color = textPrimary,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
@@ -814,26 +846,29 @@ private fun ReservationGlassCard() {
 private fun ReservationDetail(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
-    value: String
+    value: String,
+    goldColor: Color,
+    textPrimary: Color,
+    textTertiary: Color
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = GoldMuted,
+            tint = goldColor,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = TextTertiaryLight
+            color = textTertiary
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.labelLarge,
-            color = TextPrimaryLight,
+            color = textPrimary,
             fontWeight = FontWeight.Medium
         )
     }
@@ -841,6 +876,11 @@ private fun ReservationDetail(
 
 @Composable
 private fun ChefsSpecialCard() {
+    val isDark = isSystemInDarkTheme()
+    val goldColor = AppColors.gold()
+    val heroBackground = AppColors.heroBackground()
+    val accentTerracotta = AppColors.accentTerracotta()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -850,7 +890,7 @@ private fun ChefsSpecialCard() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(CharcoalDeep)
+                .background(heroBackground)
                 .padding(20.dp)
         ) {
             Row {
@@ -872,7 +912,7 @@ private fun ChefsSpecialCard() {
                     Icon(
                         imageVector = Icons.Outlined.Restaurant,
                         contentDescription = null,
-                        tint = GoldMuted,
+                        tint = goldColor,
                         modifier = Modifier.size(40.dp)
                     )
 
@@ -898,20 +938,20 @@ private fun ChefsSpecialCard() {
                         Text(
                             text = "CHEF'S SPECIAL",
                             style = MaterialTheme.typography.labelSmall,
-                            color = GoldMuted,
+                            color = goldColor,
                             letterSpacing = 1.5.sp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(TerracottaMuted.copy(alpha = 0.2f))
+                                .background(accentTerracotta.copy(alpha = 0.2f))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = "LIMITED",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TerracottaMuted,
+                                color = accentTerracotta,
                                 fontSize = 9.sp
                             )
                         }
@@ -953,13 +993,13 @@ private fun ChefsSpecialCard() {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(GoldMuted)
+                                .background(goldColor)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Text(
                                 text = "Order",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = CharcoalDeep,
+                                color = heroBackground,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -972,6 +1012,14 @@ private fun ChefsSpecialCard() {
 
 @Composable
 private fun PremiumStatsCard() {
+    val isDark = isSystemInDarkTheme()
+    val goldColor = AppColors.gold()
+    val textPrimary = AppColors.textPrimary()
+    val textTertiary = AppColors.textTertiary()
+    val borderColor = AppColors.border()
+    val cardBackground = AppColors.cardBackground()
+    val goldBackgroundColor = AppColors.goldBackground()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -979,15 +1027,15 @@ private fun PremiumStatsCard() {
             .background(
                 Brush.linearGradient(
                     colors = listOf(
-                        IvoryWhite,
-                        ChampagneGold.copy(alpha = 0.5f),
-                        IvoryWhite
+                        cardBackground,
+                        goldBackgroundColor,
+                        cardBackground
                     )
                 )
             )
             .border(
                 width = 0.5.dp,
-                color = BorderLight,
+                color = borderColor,
                 shape = RoundedCornerShape(20.dp)
             )
             .padding(24.dp)
@@ -996,27 +1044,48 @@ private fun PremiumStatsCard() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            StatItem(value = "127", label = "Reservations", icon = Icons.Outlined.LocalDining)
+            StatItem(
+                value = "127",
+                label = "Reservations",
+                icon = Icons.Outlined.LocalDining,
+                goldColor = goldColor,
+                textPrimary = textPrimary,
+                textTertiary = textTertiary
+            )
 
             // Divider
             Box(
                 modifier = Modifier
                     .width(1.dp)
                     .height(60.dp)
-                    .background(BorderLight)
+                    .background(borderColor)
             )
 
-            StatItem(value = "4.9", label = "Avg Rating", icon = Icons.Default.Star)
+            StatItem(
+                value = "4.9",
+                label = "Avg Rating",
+                icon = Icons.Default.Star,
+                goldColor = goldColor,
+                textPrimary = textPrimary,
+                textTertiary = textTertiary
+            )
 
             // Divider
             Box(
                 modifier = Modifier
                     .width(1.dp)
                     .height(60.dp)
-                    .background(BorderLight)
+                    .background(borderColor)
             )
 
-            StatItem(value = "23", label = "Favorites", icon = Icons.Default.Favorite)
+            StatItem(
+                value = "23",
+                label = "Favorites",
+                icon = Icons.Default.Favorite,
+                goldColor = goldColor,
+                textPrimary = textPrimary,
+                textTertiary = textTertiary
+            )
         }
     }
 }
@@ -1025,36 +1094,48 @@ private fun PremiumStatsCard() {
 private fun StatItem(
     value: String,
     label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    goldColor: Color,
+    textPrimary: Color,
+    textTertiary: Color
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = GoldMuted,
+            tint = goldColor,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.headlineSmall,
-            color = TextPrimaryLight,
+            color = textPrimary,
             fontWeight = FontWeight.Bold
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = TextTertiaryLight
+            color = textTertiary
         )
     }
 }
 
 @Composable
 private fun LuxuryMenuItemCard() {
+    val isDark = isSystemInDarkTheme()
+    val goldColor = AppColors.gold()
+    val textPrimary = AppColors.textPrimary()
+    val textSecondary = AppColors.textSecondary()
+    val heroBackground = AppColors.heroBackground()
+    val cardBackground = AppColors.cardBackground()
+    val accentGreen = AppColors.accentGreen()
+    val accentBurgundy = AppColors.accentBurgundy()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = cardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column {
@@ -1104,13 +1185,13 @@ private fun LuxuryMenuItemCard() {
                         .align(Alignment.TopEnd)
                         .padding(12.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(GlassWhite.copy(alpha = 0.9f))
+                        .background(if (isDark) GlassDark else GlassWhite.copy(alpha = 0.9f))
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = "$89",
                         style = MaterialTheme.typography.titleMedium,
-                        color = CharcoalDeep,
+                        color = if (isDark) Color.White else heroBackground,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -1122,13 +1203,13 @@ private fun LuxuryMenuItemCard() {
                         .padding(12.dp)
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(GlassWhite.copy(alpha = 0.8f)),
+                        .background(if (isDark) GlassDark else GlassWhite.copy(alpha = 0.8f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.FavoriteBorder,
                         contentDescription = "Add to favorites",
-                        tint = CharcoalDeep,
+                        tint = if (isDark) Color.White else heroBackground,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -1144,7 +1225,7 @@ private fun LuxuryMenuItemCard() {
                     Text(
                         text = "Lobster Thermidor",
                         style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimaryLight,
+                        color = textPrimary,
                         fontWeight = FontWeight.SemiBold
                     )
 
@@ -1152,14 +1233,14 @@ private fun LuxuryMenuItemCard() {
                         Icon(
                             imageVector = Icons.Default.Star,
                             contentDescription = null,
-                            tint = GoldMuted,
+                            tint = goldColor,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "4.8",
                             style = MaterialTheme.typography.labelLarge,
-                            color = TextPrimaryLight,
+                            color = textPrimary,
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -1170,7 +1251,7 @@ private fun LuxuryMenuItemCard() {
                 Text(
                     text = "Classic French preparation with brandy cream sauce, gruyère, and fresh herbs. Served with seasonal vegetables.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondaryLight,
+                    color = textSecondary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -1181,9 +1262,9 @@ private fun LuxuryMenuItemCard() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    SmallTag(text = "Seafood", color = SageGreen)
-                    SmallTag(text = "French", color = DeepBurgundy)
-                    SmallTag(text = "Popular", color = GoldMuted)
+                    SmallTag(text = "Seafood", color = accentGreen)
+                    SmallTag(text = "French", color = accentBurgundy)
+                    SmallTag(text = "Popular", color = goldColor)
                 }
             }
         }
@@ -1209,18 +1290,18 @@ private fun SmallTag(text: String, color: Color) {
 
 @Composable
 private fun GlassBottomBarPreview() {
+    val isDark = isSystemInDarkTheme()
+    val goldColor = AppColors.gold()
+    val glassBackground = AppColors.glassBackground()
+    val outerBackground = if (isDark) listOf(CharcoalMedium, CharcoalLight, CharcoalMedium)
+                          else listOf(Gray200, Gray100, Gray200)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .background(
-                Brush.linearGradient(
-                    colors = listOf(
-                        Gray200,
-                        Gray100,
-                        Gray200
-                    )
-                )
+                Brush.linearGradient(colors = outerBackground)
             )
             .padding(8.dp)
     ) {
@@ -1228,20 +1309,20 @@ private fun GlassBottomBarPreview() {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(GlassWhiteLight)
+                .background(glassBackground)
                 .border(
                     width = 0.5.dp,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = if (isDark) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(20.dp)
                 )
                 .padding(horizontal = 8.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomNavItem(icon = Icons.Outlined.Restaurant, label = "Home", isSelected = true)
-            BottomNavItem(icon = Icons.Outlined.Search, label = "Search", isSelected = false)
-            BottomNavItem(icon = Icons.Outlined.FavoriteBorder, label = "Favorites", isSelected = false)
-            BottomNavItem(icon = Icons.Outlined.Person, label = "Profile", isSelected = false)
+            BottomNavItem(icon = Icons.Outlined.Restaurant, label = "Home", isSelected = true, goldColor = goldColor, isDark = isDark)
+            BottomNavItem(icon = Icons.Outlined.Search, label = "Search", isSelected = false, goldColor = goldColor, isDark = isDark)
+            BottomNavItem(icon = Icons.Outlined.FavoriteBorder, label = "Favorites", isSelected = false, goldColor = goldColor, isDark = isDark)
+            BottomNavItem(icon = Icons.Outlined.Person, label = "Profile", isSelected = false, goldColor = goldColor, isDark = isDark)
         }
     }
 }
@@ -1250,8 +1331,12 @@ private fun GlassBottomBarPreview() {
 private fun BottomNavItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
-    isSelected: Boolean
+    isSelected: Boolean,
+    goldColor: Color,
+    isDark: Boolean
 ) {
+    val unselectedColor = if (isDark) Gray400 else Gray500
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(horizontal = 12.dp)
@@ -1259,13 +1344,13 @@ private fun BottomNavItem(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
-                .background(if (isSelected) GoldMuted.copy(alpha = 0.15f) else Color.Transparent)
+                .background(if (isSelected) goldColor.copy(alpha = 0.15f) else Color.Transparent)
                 .padding(8.dp)
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (isSelected) GoldMuted else Gray500,
+                tint = if (isSelected) goldColor else unselectedColor,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -1273,7 +1358,7 @@ private fun BottomNavItem(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = if (isSelected) GoldMuted else Gray500,
+            color = if (isSelected) goldColor else unselectedColor,
             fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
         )
     }
@@ -1282,6 +1367,13 @@ private fun BottomNavItem(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PremiumBadgesRow() {
+    val isDark = isSystemInDarkTheme()
+    val goldColor = AppColors.gold()
+    val heroBackground = AppColors.heroBackground()
+    val accentGreen = AppColors.accentGreen()
+    val accentTerracotta = AppColors.accentTerracotta()
+    val accentBurgundy = AppColors.accentBurgundy()
+
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -1289,26 +1381,26 @@ private fun PremiumBadgesRow() {
         PremiumBadge(
             text = "Michelin Star",
             backgroundColor = Brush.linearGradient(colors = GradientGold),
-            textColor = CharcoalDeep
+            textColor = heroBackground
         )
         PremiumBadge(
             text = "Top Rated",
             backgroundColor = Brush.linearGradient(
-                colors = listOf(CharcoalDeep, Color(0xFF3D3D3D))
+                colors = listOf(heroBackground, CharcoalMedium)
             ),
-            textColor = GoldMuted
+            textColor = goldColor
         )
         PremiumBadge(
             text = "New",
             backgroundColor = Brush.linearGradient(
-                colors = listOf(SageGreen, DeepOlive)
+                colors = listOf(accentGreen, DeepOlive)
             ),
             textColor = Color.White
         )
         PremiumBadge(
             text = "Featured",
             backgroundColor = Brush.linearGradient(
-                colors = listOf(TerracottaMuted, DeepBurgundy)
+                colors = listOf(accentTerracotta, accentBurgundy)
             ),
             textColor = Color.White
         )
@@ -1347,6 +1439,11 @@ private fun PremiumBadge(
 
 @Composable
 private fun FloatingGlassActionCard() {
+    val isDark = isSystemInDarkTheme()
+    val goldColor = AppColors.gold()
+    val heroBackground = AppColors.heroBackground()
+    val textSecondary = if (isDark) Gray400 else Gray500
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -1354,8 +1451,8 @@ private fun FloatingGlassActionCard() {
             .background(
                 Brush.linearGradient(
                     colors = listOf(
-                        CharcoalDeep,
-                        Color(0xFF252525)
+                        heroBackground,
+                        CharcoalMedium
                     )
                 )
             )
@@ -1368,7 +1465,7 @@ private fun FloatingGlassActionCard() {
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            GoldMuted.copy(alpha = 0.15f),
+                            goldColor.copy(alpha = 0.15f),
                             Color.Transparent
                         )
                     ),
@@ -1392,7 +1489,7 @@ private fun FloatingGlassActionCard() {
                 Text(
                     text = "Find your perfect restaurant tonight",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Gray400
+                    color = textSecondary
                 )
             }
 
@@ -1411,14 +1508,14 @@ private fun FloatingGlassActionCard() {
                     Text(
                         text = "Book Now",
                         style = MaterialTheme.typography.labelLarge,
-                        color = CharcoalDeep,
+                        color = heroBackground,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
-                        tint = CharcoalDeep,
+                        tint = heroBackground,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -1547,7 +1644,7 @@ private fun ColorPaletteSection() {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ColorSwatch(color = GoldMuted, name = "Gold Muted")
-            ColorSwatch(color = ChampagneGold, name = "Champagne")
+            ColorSwatch(color = AppColors.goldBackground(), name = "Gold Background")
         }
 
         // Accent Colors
@@ -2066,7 +2163,7 @@ private fun CardsSection() {
                     modifier = Modifier
                         .size(56.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(ChampagneGold),
+                        .background(AppColors.goldBackground()),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
