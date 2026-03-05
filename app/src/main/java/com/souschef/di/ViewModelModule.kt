@@ -1,5 +1,9 @@
 package com.souschef.di
 
+import com.souschef.ui.screens.auth.login.LoginViewModel
+import com.souschef.ui.screens.auth.signup.SignUpViewModel
+import com.souschef.ui.screens.recipe.create.CreateRecipeViewModel
+import com.souschef.ui.viewmodels.AppViewModel
 import org.koin.dsl.module
 
 /**
@@ -15,6 +19,15 @@ import org.koin.dsl.module
  *   factory { LoginViewModel(get()) }
  */
 val viewModelModule = module {
-    // ViewModels added in Phase 1+
-}
+    // App-level — single (survives navigation)
+    single { AppViewModel(get()) }
 
+    // Auth screens — factory (fresh per navigation)
+    factory { LoginViewModel(get()) }
+    factory { SignUpViewModel(get()) }
+
+    // Recipe creation — factory, needs currentUser from AppViewModel
+    factory { (currentUser: com.souschef.model.auth.UserProfile) ->
+        CreateRecipeViewModel(get(), get(), currentUser)
+    }
+}
