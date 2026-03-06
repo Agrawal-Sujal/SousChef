@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.souschef.model.auth.UserProfile
 import com.souschef.model.ingredient.GlobalIngredient
 import com.souschef.model.recipe.RecipeIngredient
+import com.souschef.model.recipe.RecipeTag
 import com.souschef.usecases.ingredient.GetIngredientsUseCase
 import com.souschef.usecases.recipe.CreateRecipeUseCase
 import com.souschef.usecases.recipe.PublishRecipeUseCase
@@ -36,7 +37,7 @@ class CreateRecipeViewModel(
     private val _maxServingSize = MutableStateFlow<Int?>(null)
     private val _useMinServing = MutableStateFlow(false)
     private val _useMaxServing = MutableStateFlow(false)
-    private val _selectedTags = MutableStateFlow<List<String>>(emptyList())
+    private val _selectedTags = MutableStateFlow<List<RecipeTag>>(emptyList())
     private val _ingredients = MutableStateFlow<List<RecipeIngredient>>(emptyList())
     private val _globalIngredients = MutableStateFlow<List<GlobalIngredient>>(emptyList())
     private val _titleError = MutableStateFlow<String?>(null)
@@ -146,7 +147,7 @@ class CreateRecipeViewModel(
         _maxServingSize.value = size.coerceIn(_baseServingSize.value, 100)
     }
 
-    fun onToggleTag(tag: String) {
+    fun onToggleTag(tag: RecipeTag) {
         val current = _selectedTags.value
         _selectedTags.value = if (tag in current) current - tag else current + tag
     }
@@ -180,7 +181,7 @@ class CreateRecipeViewModel(
                 baseServingSize = _baseServingSize.value,
                 minServingSize = _minServingSize.value,
                 maxServingSize = _maxServingSize.value,
-                tags = _selectedTags.value,
+                tags = _selectedTags.value.map { it.name },
                 ingredients = _ingredients.value,
                 currentUser = currentUser,
                 publish = publish
