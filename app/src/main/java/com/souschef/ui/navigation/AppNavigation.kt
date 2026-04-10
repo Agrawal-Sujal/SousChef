@@ -26,6 +26,8 @@ import com.souschef.ui.screens.home.HomeScreen
 import com.souschef.ui.screens.ingredient.addedit.AddEditIngredientScreen
 import com.souschef.ui.screens.ingredient.addedit.AddEditIngredientViewModel
 import com.souschef.ui.screens.ingredient.library.IngredientLibraryScreen
+import com.souschef.ui.screens.recipe.cooking.CookingModeScreen
+import com.souschef.ui.screens.recipe.cooking.CookingModeViewModel
 import com.souschef.ui.screens.recipe.create.CreateRecipeScreen
 import com.souschef.ui.screens.recipe.create.CreateRecipeViewModel
 import com.souschef.ui.screens.recipe.overview.RecipeOverviewScreen
@@ -193,7 +195,22 @@ fun AppNavigation() {
                     viewModel = viewModel
                 )
             }
-            entry<Screens.NavCookingModeRoute> { PlaceholderScreen("Cooking Mode — Phase 4") }
+            entry<Screens.NavCookingModeRoute> { route ->
+                val viewModel: CookingModeViewModel = koinInject {
+                    parametersOf(
+                        route.recipeId,
+                        route.selectedServings,
+                        route.spiceLevel,
+                        route.saltLevel,
+                        route.sweetnessLevel
+                    )
+                }
+                CookingModeScreen(
+                    onBack = { if (backstack.size > 1) backstack.removeAt(backstack.size - 1) },
+                    onFinished = { if (backstack.size > 1) backstack.removeAt(backstack.size - 1) },
+                    viewModel = viewModel
+                )
+            }
 
             // ── Saved / Profile (Phase 7) ────────────────
             entry<Screens.NavSavedRecipesRoute> { PlaceholderScreen("Saved Recipes — Phase 7") }

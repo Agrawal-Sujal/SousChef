@@ -4,7 +4,9 @@ import com.souschef.ui.screens.auth.login.LoginViewModel
 import com.souschef.ui.screens.auth.signup.SignUpViewModel
 import com.souschef.ui.screens.ingredient.addedit.AddEditIngredientViewModel
 import com.souschef.ui.screens.ingredient.library.IngredientLibraryViewModel
+import com.souschef.ui.screens.recipe.cooking.CookingModeViewModel
 import com.souschef.ui.screens.recipe.create.CreateRecipeViewModel
+import com.souschef.ui.screens.recipe.overview.RecipeOverviewViewModel
 import com.souschef.ui.viewmodels.AppViewModel
 import org.koin.dsl.module
 
@@ -29,6 +31,16 @@ val viewModelModule = module {
         CreateRecipeViewModel(get(), get(), get(), currentUser)
     }
 
+    // Recipe overview — factory, needs recipeId
+    factory { (recipeId: String) ->
+        RecipeOverviewViewModel(get(), get(), get(), recipeId)
+    }
+
+    // Cooking mode — factory, needs recipeId + serving/flavour params
+    factory { (recipeId: String, servings: Int, spice: Float, salt: Float, sweetness: Float) ->
+        CookingModeViewModel(get(), get(), get(), recipeId, servings, spice, salt, sweetness)
+    }
+
     // Ingredient Library — factory (fresh per navigation)
     factory { IngredientLibraryViewModel(get()) }
 
@@ -37,3 +49,4 @@ val viewModelModule = module {
         AddEditIngredientViewModel(get(), get(), get(), currentUser, ingredientId)
     }
 }
+
