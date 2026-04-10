@@ -125,7 +125,7 @@ fun AppNavigation() {
                         }
                     },
                     onCreateRecipe = {
-                        backstack.add(Screens.NavCreateRecipeRoute)
+                        backstack.add(Screens.NavCreateRecipeRoute())
                     }
                 )
             }
@@ -191,7 +191,7 @@ fun AppNavigation() {
                             backstack.add(Screens.NavAiStepGenerationRoute(recipeId))
                         },
                         onCreateRecipe = {
-                            backstack.add(Screens.NavCreateRecipeRoute)
+                            backstack.add(Screens.NavCreateRecipeRoute())
                         }
                     )
                 }
@@ -212,7 +212,7 @@ fun AppNavigation() {
                             backstack.add(Screens.NavAiStepGenerationRoute(recipeId))
                         },
                         onCreateRecipe = {
-                            backstack.add(Screens.NavCreateRecipeRoute)
+                            backstack.add(Screens.NavCreateRecipeRoute())
                         }
                     )
                 }
@@ -227,10 +227,11 @@ fun AppNavigation() {
                 }
 
                 // ── Create Recipe ────────────────────────────
-                entry<Screens.NavCreateRecipeRoute> {
+                entry<Screens.NavCreateRecipeRoute> { route ->
                     val currentUser = appViewModel.currentUser.value ?: UserProfile()
-                    val viewModel: CreateRecipeViewModel = koinInject { parametersOf(currentUser) }
+                    val viewModel: CreateRecipeViewModel = koinInject { parametersOf(currentUser, route.recipeId) }
                     CreateRecipeScreen(
+                        isEditMode = route.recipeId != null,
                         onBack = { if (backstack.size > 1) backstack.removeAt(backstack.size - 1) },
                         onRecipeSaved = { recipeId ->
                             if (backstack.size > 1) backstack.removeAt(backstack.size - 1)
@@ -272,7 +273,8 @@ fun AppNavigation() {
                 // ── Recipe Detail / Overview (Phase 3) ───────
                 entry<Screens.NavRecipeDetailRoute> { PlaceholderScreen("Recipe Detail — Phase 3") }
                 entry<Screens.NavRecipeOverviewRoute> { route ->
-                    val viewModel: RecipeOverviewViewModel = koinInject { parametersOf(route.recipeId) }
+                    val currentUser = appViewModel.currentUser.value ?: UserProfile()
+                    val viewModel: RecipeOverviewViewModel = koinInject { parametersOf(route.recipeId, currentUser) }
                     RecipeOverviewScreen(
                         onBack = { if (backstack.size > 1) backstack.removeAt(backstack.size - 1) },
                         onStartCooking = { servings, spice, salt, sweetness ->
@@ -285,6 +287,9 @@ fun AppNavigation() {
                                     sweetnessLevel = sweetness
                                 )
                             )
+                        },
+                        onEditRecipe = { recipeId ->
+                            backstack.add(Screens.NavCreateRecipeRoute(recipeId = recipeId))
                         },
                         viewModel = viewModel
                     )

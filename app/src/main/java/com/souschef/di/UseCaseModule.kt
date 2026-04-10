@@ -8,6 +8,8 @@ import com.souschef.usecases.recipe.GenerateRecipeStepsUseCase
 import com.souschef.usecases.recipe.PublishRecipeUseCase
 import com.souschef.usecases.recipe.RecipeCalculationUseCase
 import com.souschef.usecases.recipe.SaveRecipeStepsUseCase
+import com.souschef.usecases.recipe.UpdateRecipeUseCase
+import com.souschef.usecases.recipe.DeleteRecipeUseCase
 import org.koin.dsl.module
 
 /**
@@ -22,4 +24,6 @@ val useCaseModule = module {
     single { GetIngredientsUseCase(get()) }
     single { GenerateRecipeStepsUseCase(get()) }
     single { SaveRecipeStepsUseCase(get()) }
+    single { UpdateRecipeUseCase(get()) }
+    single { DeleteRecipeUseCase(get(), get()) }
 }
