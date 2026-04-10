@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.flow
 
 /**
  * Updates an existing global ingredient.
- * Validates ownership: only the creator or an admin can edit.
+ * Any user can edit a global ingredient.
  */
 class UpdateGlobalIngredientUseCase(
     private val ingredientRepository: IngredientRepository
@@ -30,10 +30,6 @@ class UpdateGlobalIngredientUseCase(
             when (result) {
                 is Resource.Success -> {
                     val existing = result.data
-                    if (existing.createdByUserId != currentUserId) {
-                        emit(Resource.failure(message = "Only the creator can edit this ingredient."))
-                        return@collect
-                    }
 
                     val updates = mutableMapOf<String, Any>("updatedAt" to Timestamp.now())
                     name?.trim()?.takeIf { it.isNotBlank() }?.let { updates["name"] = it }

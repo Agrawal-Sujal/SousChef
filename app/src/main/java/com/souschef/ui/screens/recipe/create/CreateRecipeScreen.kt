@@ -51,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.souschef.model.ingredient.GlobalIngredient
 import com.souschef.model.recipe.RecipeIngredient
+import com.souschef.model.recipe.RecipeStep
 import com.souschef.model.recipe.RecipeTag
 import com.souschef.ui.components.PremiumButton
 import com.souschef.ui.components.PremiumDivider
@@ -96,6 +97,7 @@ fun CreateRecipeScreen(
         onBack = onBack,
         onNextStep = viewModel::onNextStep,
         onPreviousStep = viewModel::onPreviousStep,
+        // Step 1
         onTitleChange = viewModel::onTitleChange,
         onDescriptionChange = viewModel::onDescriptionChange,
         onBaseServingSizeChange = viewModel::onBaseServingSizeChange,
@@ -106,8 +108,23 @@ fun CreateRecipeScreen(
         onToggleTag = viewModel::onToggleTag,
         onCoverImageSelected = viewModel::onCoverImageSelected,
         onRemoveCoverImage = viewModel::onRemoveCoverImage,
+        // Step 2
         onAddIngredient = viewModel::onAddIngredient,
         onRemoveIngredient = viewModel::onRemoveIngredient,
+        onCreateGlobalIngredient = viewModel::onCreateGlobalIngredientAndAdd,
+        // Step 3
+        onAiDescriptionChange = viewModel::onAiDescriptionChange,
+        onGenerateSteps = viewModel::onGenerateSteps,
+        onCancelGeneration = viewModel::onCancelGeneration,
+        onEditStep = viewModel::onEditStep,
+        onDeleteStep = viewModel::onDeleteStep,
+        onMoveStepUp = viewModel::onMoveStepUp,
+        onMoveStepDown = viewModel::onMoveStepDown,
+        onAddManualStep = viewModel::onAddManualStep,
+        onRetryGeneration = viewModel::onRetryGeneration,
+        onStepMediaSelected = viewModel::onStepMediaSelected,
+        onRemoveStepMedia = viewModel::onRemoveStepMedia,
+        // Step 4
         onSave = viewModel::onSave
     )
 }
@@ -125,6 +142,7 @@ fun CreateRecipeScreenLayout(
     onBack: () -> Unit,
     onNextStep: () -> Unit,
     onPreviousStep: () -> Unit,
+    // Step 1
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onBaseServingSizeChange: (Int) -> Unit,
@@ -135,8 +153,23 @@ fun CreateRecipeScreenLayout(
     onToggleTag: (RecipeTag) -> Unit,
     onCoverImageSelected: (Uri) -> Unit,
     onRemoveCoverImage: () -> Unit,
+    // Step 2
     onAddIngredient: (RecipeIngredient) -> Unit,
     onRemoveIngredient: (String) -> Unit,
+    onCreateGlobalIngredient: (String, Double, String) -> Unit,
+    // Step 3
+    onAiDescriptionChange: (String) -> Unit,
+    onGenerateSteps: () -> Unit,
+    onCancelGeneration: () -> Unit,
+    onEditStep: (Int, RecipeStep) -> Unit,
+    onDeleteStep: (Int) -> Unit,
+    onMoveStepUp: (Int) -> Unit,
+    onMoveStepDown: (Int) -> Unit,
+    onAddManualStep: () -> Unit,
+    onRetryGeneration: () -> Unit,
+    onStepMediaSelected: (Int, Uri, String) -> Unit,
+    onRemoveStepMedia: (Int) -> Unit,
+    // Step 4
     onSave: (Boolean) -> Unit
 ) {
     Scaffold(
@@ -211,9 +244,25 @@ fun CreateRecipeScreenLayout(
                         globalIngredients = uiState.globalIngredients,
                         ingredientError = uiState.ingredientError,
                         onAddIngredient = onAddIngredient,
-                        onRemoveIngredient = onRemoveIngredient
+                        onRemoveIngredient = onRemoveIngredient,
+                        onCreateGlobalIngredient = onCreateGlobalIngredient
                     )
-                    2 -> Step3Review(
+                    2 -> Step3CookingSteps(
+                        uiState = uiState,
+                        onAiDescriptionChange = onAiDescriptionChange,
+                        onGenerateSteps = onGenerateSteps,
+                        onCancelGeneration = onCancelGeneration,
+                        onEditStep = onEditStep,
+                        onDeleteStep = onDeleteStep,
+                        onMoveStepUp = onMoveStepUp,
+                        onMoveStepDown = onMoveStepDown,
+                        onAddManualStep = onAddManualStep,
+                        onRetryGeneration = onRetryGeneration,
+                        onStepMediaSelected = onStepMediaSelected,
+                        onRemoveStepMedia = onRemoveStepMedia,
+                        onSkip = onNextStep
+                    )
+                    3 -> Step3Review(
                         uiState = uiState,
                         onSave = onSave
                     )
@@ -222,26 +271,38 @@ fun CreateRecipeScreenLayout(
 
             // Bottom navigation buttons
             if (uiState.canGoBack || uiState.canGoNext) {
-                PremiumDivider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (uiState.canGoBack) {
-                        PremiumOutlinedButton(
-                            text = "Back",
-                            onClick = onPreviousStep,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    if (uiState.canGoNext) {
-                        PremiumButton(
-                            text = "Next",
-                            onClick = onNextStep,
-                            modifier = Modifier.weight(1f)
-                        )
+                // Don't show bottom nav during AI loading or on the Steps review stage
+                // (those stages handle their own actions)
+                val showBottomNav = uiState.currentStep != 2 ||
+                    uiState.stepsStage != CreateRecipeUiState.StepsStage.LOADING
+
+                if (showBottomNav) {
+                    PremiumDivider()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (uiState.canGoBack) {
+                            PremiumOutlinedButton(
+                                text = "Back",
+                                onClick = onPreviousStep,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        if (uiState.canGoNext) {
+                            val nextText = if (uiState.currentStep == 2 && uiState.stepsStage == CreateRecipeUiState.StepsStage.INPUT) {
+                                "Skip Steps →"
+                            } else {
+                                "Next"
+                            }
+                            PremiumButton(
+                                text = nextText,
+                                onClick = onNextStep,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
             }
@@ -371,7 +432,14 @@ private fun CreateRecipeStep1Preview() {
             onMinServingSizeChange = {}, onUseMaxServingChange = {},
             onMaxServingSizeChange = {}, onToggleTag = {},
             onCoverImageSelected = {}, onRemoveCoverImage = {},
-            onAddIngredient = {}, onRemoveIngredient = {}, onSave = {}
+            onAddIngredient = {}, onRemoveIngredient = {},
+            onCreateGlobalIngredient = { _, _, _ -> },
+            onAiDescriptionChange = {}, onGenerateSteps = {},
+            onCancelGeneration = {}, onEditStep = { _, _ -> },
+            onDeleteStep = {}, onMoveStepUp = {}, onMoveStepDown = {},
+            onAddManualStep = {}, onRetryGeneration = {},
+            onStepMediaSelected = { _, _, _ -> }, onRemoveStepMedia = {},
+            onSave = {}
         )
     }
 }
@@ -402,7 +470,14 @@ private fun CreateRecipeStep2Preview() {
             onMinServingSizeChange = {}, onUseMaxServingChange = {},
             onMaxServingSizeChange = {}, onToggleTag = {},
             onCoverImageSelected = {}, onRemoveCoverImage = {},
-            onAddIngredient = {}, onRemoveIngredient = {}, onSave = {}
+            onAddIngredient = {}, onRemoveIngredient = {},
+            onCreateGlobalIngredient = { _, _, _ -> },
+            onAiDescriptionChange = {}, onGenerateSteps = {},
+            onCancelGeneration = {}, onEditStep = { _, _ -> },
+            onDeleteStep = {}, onMoveStepUp = {}, onMoveStepDown = {},
+            onAddManualStep = {}, onRetryGeneration = {},
+            onStepMediaSelected = { _, _, _ -> }, onRemoveStepMedia = {},
+            onSave = {}
         )
     }
 }
@@ -414,6 +489,36 @@ private fun CreateRecipeStep3Preview() {
         CreateRecipeScreenLayout(
             uiState = CreateRecipeUiState(
                 currentStep = 2,
+                title = "Truffle Risotto alla Milanese",
+                ingredientChips = listOf("Arborio Rice", "Parmesan Cheese", "White Truffle Oil"),
+                stepsStage = CreateRecipeUiState.StepsStage.INPUT
+            ),
+            snackbarHostState = remember { SnackbarHostState() },
+            onBack = {}, onNextStep = {}, onPreviousStep = {},
+            onTitleChange = {}, onDescriptionChange = {},
+            onBaseServingSizeChange = {}, onUseMinServingChange = {},
+            onMinServingSizeChange = {}, onUseMaxServingChange = {},
+            onMaxServingSizeChange = {}, onToggleTag = {},
+            onCoverImageSelected = {}, onRemoveCoverImage = {},
+            onAddIngredient = {}, onRemoveIngredient = {},
+            onCreateGlobalIngredient = { _, _, _ -> },
+            onAiDescriptionChange = {}, onGenerateSteps = {},
+            onCancelGeneration = {}, onEditStep = { _, _ -> },
+            onDeleteStep = {}, onMoveStepUp = {}, onMoveStepDown = {},
+            onAddManualStep = {}, onRetryGeneration = {},
+            onStepMediaSelected = { _, _, _ -> }, onRemoveStepMedia = {},
+            onSave = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun CreateRecipeStep4ReviewPreview() {
+    SousChefTheme {
+        CreateRecipeScreenLayout(
+            uiState = CreateRecipeUiState(
+                currentStep = 3,
                 title = "Truffle Risotto alla Milanese",
                 description = "A rich and creamy Italian risotto with truffle oil and Parmesan.",
                 baseServingSize = 4,
@@ -427,6 +532,10 @@ private fun CreateRecipeStep3Preview() {
                     GlobalIngredient(ingredientId = "g1", name = "Arborio Rice", defaultUnit = "grams"),
                     GlobalIngredient(ingredientId = "g2", name = "Parmesan Cheese", defaultUnit = "grams"),
                     GlobalIngredient(ingredientId = "g3", name = "White Truffle Oil", defaultUnit = "tbsp")
+                ),
+                steps = listOf(
+                    RecipeStep(stepNumber = 1, instructionText = "Heat olive oil in a pan."),
+                    RecipeStep(stepNumber = 2, instructionText = "Add arborio rice and toast for 2 minutes.")
                 )
             ),
             snackbarHostState = remember { SnackbarHostState() },
@@ -436,7 +545,14 @@ private fun CreateRecipeStep3Preview() {
             onMinServingSizeChange = {}, onUseMaxServingChange = {},
             onMaxServingSizeChange = {}, onToggleTag = {},
             onCoverImageSelected = {}, onRemoveCoverImage = {},
-            onAddIngredient = {}, onRemoveIngredient = {}, onSave = {}
+            onAddIngredient = {}, onRemoveIngredient = {},
+            onCreateGlobalIngredient = { _, _, _ -> },
+            onAiDescriptionChange = {}, onGenerateSteps = {},
+            onCancelGeneration = {}, onEditStep = { _, _ -> },
+            onDeleteStep = {}, onMoveStepUp = {}, onMoveStepDown = {},
+            onAddManualStep = {}, onRetryGeneration = {},
+            onStepMediaSelected = { _, _, _ -> }, onRemoveStepMedia = {},
+            onSave = {}
         )
     }
 }

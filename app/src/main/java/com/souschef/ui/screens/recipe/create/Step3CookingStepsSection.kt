@@ -1,8 +1,9 @@
-package com.souschef.ui.screens.recipe.aigeneration
+package com.souschef.ui.screens.recipe.create
 
 import android.net.Uri
-import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.souschef.model.recipe.RecipeIngredient
+import com.souschef.model.ingredient.GlobalIngredient
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -18,6 +19,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,7 +40,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
@@ -55,22 +56,16 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -83,11 +78,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.souschef.model.recipe.RecipeStep
-import com.souschef.ui.components.FullScreenLoader
 import com.souschef.ui.components.PremiumButton
 import com.souschef.ui.components.PremiumDivider
 import com.souschef.ui.components.PremiumOutlinedButton
@@ -95,69 +88,15 @@ import com.souschef.ui.components.PremiumSectionHeader
 import com.souschef.ui.components.PremiumTextButton
 import com.souschef.ui.theme.AppColors
 import com.souschef.ui.theme.CustomShapes
-import com.souschef.ui.theme.SousChefTheme
 
-/**
- * Stateful composable — wires ViewModel.
- * Entry point from navigation.
- */
+// ─────────────────────────────────────────────────────────────
+// Step 3: Cooking Steps (AI Generate / Manual — Optional)
+// ─────────────────────────────────────────────────────────────
+
 @Composable
-fun AiStepGenerationScreen(
-    onBack: () -> Unit,
-    onSaved: () -> Unit,
-    viewModel: AiStepGenerationViewModel
-) {
-    val uiState by viewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    // Show errors via Snackbar
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
-        }
-    }
-
-    // Navigate after successful save
-    LaunchedEffect(uiState.isSaved) {
-        if (uiState.isSaved) {
-            onSaved()
-        }
-    }
-
-    if (uiState.isRecipeLoading) {
-        FullScreenLoader(message = "Loading recipe…")
-        return
-    }
-
-    AiStepGenerationScreenLayout(
-        uiState = uiState,
-        onBack = onBack,
-        onDescriptionChange = viewModel::onDescriptionChange,
-        onGenerateSteps = viewModel::onGenerateSteps,
-        onCancelGeneration = viewModel::onCancelGeneration,
-        onEditStep = viewModel::onEditStep,
-        onDeleteStep = viewModel::onDeleteStep,
-        onMoveStepUp = viewModel::onMoveStepUp,
-        onMoveStepDown = viewModel::onMoveStepDown,
-        onAddManualStep = viewModel::onAddManualStep,
-        onSaveSteps = viewModel::onSaveSteps,
-        onRetry = viewModel::onRetry,
-        onStepMediaSelected = viewModel::onStepMediaSelected,
-        onRemoveStepMedia = viewModel::onRemoveStepMedia,
-        snackbarHostState = snackbarHostState
-    )
-}
-
-/**
- * Stateless layout composable — purely presentational.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AiStepGenerationScreenLayout(
-    uiState: AiStepGenerationUiState,
-    onBack: () -> Unit,
-    onDescriptionChange: (String) -> Unit,
+internal fun Step3CookingSteps(
+    uiState: CreateRecipeUiState,
+    onAiDescriptionChange: (String) -> Unit,
     onGenerateSteps: () -> Unit,
     onCancelGeneration: () -> Unit,
     onEditStep: (Int, RecipeStep) -> Unit,
@@ -165,87 +104,64 @@ fun AiStepGenerationScreenLayout(
     onMoveStepUp: (Int) -> Unit,
     onMoveStepDown: (Int) -> Unit,
     onAddManualStep: () -> Unit,
-    onSaveSteps: () -> Unit,
-    onRetry: () -> Unit,
-    onStepMediaSelected: (Int, Uri, String) -> Unit = { _, _, _ -> },
-    onRemoveStepMedia: (Int) -> Unit = {},
-    snackbarHostState: SnackbarHostState
+    onRetryGeneration: () -> Unit,
+    onStepMediaSelected: (Int, Uri, String) -> Unit,
+    onRemoveStepMedia: (Int) -> Unit,
+    onSkip: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "AI Step Generator",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AppColors.textPrimary()
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = AppColors.textPrimary()
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
+    val globalMap = remember(uiState.globalIngredients) {
+        uiState.globalIngredients.associateBy { it.ingredientId }
+    }
+    AnimatedContent(
+        targetState = uiState.stepsStage,
+        modifier = Modifier.fillMaxSize(),
+        transitionSpec = {
+            fadeIn(tween(300)) togetherWith fadeOut(tween(200))
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        AnimatedContent(
-            targetState = uiState.stage,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            transitionSpec = {
-                fadeIn(tween(300)) togetherWith fadeOut(tween(200))
-            },
-            label = "stage_transition"
-        ) { stage ->
-            when (stage) {
-                AiStepGenerationUiState.Stage.INPUT -> InputStage(
-                    recipeTitle = uiState.recipeTitle,
-                    description = uiState.recipeDescription,
-                    ingredientChips = uiState.ingredientChips,
-                    onDescriptionChange = onDescriptionChange,
-                    onGenerateSteps = onGenerateSteps
-                )
-                AiStepGenerationUiState.Stage.LOADING -> LoadingStage(
-                    onCancel = onCancelGeneration
-                )
-                AiStepGenerationUiState.Stage.REVIEW -> ReviewStage(
-                    steps = uiState.generatedSteps,
-                    isSaving = uiState.isSaving,
-                    onEditStep = onEditStep,
-                    onDeleteStep = onDeleteStep,
-                    onMoveStepUp = onMoveStepUp,
-                    onMoveStepDown = onMoveStepDown,
-                    onAddManualStep = onAddManualStep,
-                    onSaveSteps = onSaveSteps,
-                    onRetry = onRetry,
-                    onStepMediaSelected = onStepMediaSelected,
-                    onRemoveStepMedia = onRemoveStepMedia
-                )
-            }
+        label = "steps_stage"
+    ) { stage ->
+        when (stage) {
+            CreateRecipeUiState.StepsStage.INPUT -> StepsInputStage(
+                recipeTitle = uiState.title,
+                aiDescription = uiState.aiDescription,
+                ingredientChips = uiState.ingredientChips,
+                onAiDescriptionChange = onAiDescriptionChange,
+                onGenerateSteps = onGenerateSteps,
+                onAddManualStep = onAddManualStep,
+                onSkip = onSkip
+            )
+            CreateRecipeUiState.StepsStage.LOADING -> StepsLoadingStage(
+                onCancel = onCancelGeneration
+            )
+            CreateRecipeUiState.StepsStage.REVIEW -> StepsReviewStage(
+                steps = uiState.steps,
+                recipeIngredients = uiState.ingredients,
+                globalIngredients = uiState.globalIngredients,
+                onEditStep = onEditStep,
+                onDeleteStep = onDeleteStep,
+                onMoveStepUp = onMoveStepUp,
+                onMoveStepDown = onMoveStepDown,
+                onAddManualStep = onAddManualStep,
+                onRetry = onRetryGeneration,
+                onStepMediaSelected = onStepMediaSelected,
+                onRemoveStepMedia = onRemoveStepMedia
+            )
         }
     }
 }
 
-// ── Stage 1: Input ───────────────────────────────────────────
+// ── Input Stage ──────────────────────────────────────────────
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun InputStage(
+private fun StepsInputStage(
     recipeTitle: String,
-    description: String,
+    aiDescription: String,
     ingredientChips: List<String>,
-    onDescriptionChange: (String) -> Unit,
-    onGenerateSteps: () -> Unit
+    onAiDescriptionChange: (String) -> Unit,
+    onGenerateSteps: () -> Unit,
+    onAddManualStep: () -> Unit,
+    onSkip: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -256,7 +172,7 @@ private fun InputStage(
     ) {
         Spacer(Modifier.height(8.dp))
 
-        // Header with sparkle icon
+        // Header
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -277,20 +193,20 @@ private fun InputStage(
             }
             Column {
                 Text(
-                    text = "Generate Cooking Steps",
+                    text = "Add Cooking Steps",
                     style = MaterialTheme.typography.headlineSmall,
                     color = AppColors.textPrimary(),
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "for \"$recipeTitle\"",
+                    text = "Optional — skip if you prefer",
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppColors.textSecondary()
                 )
             }
         }
 
-        // Description input
+        // AI generation card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = CustomShapes.GlassCard,
@@ -299,28 +215,28 @@ private fun InputStage(
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = "Describe Your Recipe",
+                    text = "✨ Generate with AI",
                     style = MaterialTheme.typography.titleMedium,
                     color = AppColors.textPrimary(),
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Write how you'd cook this dish — the AI will break it into precise steps",
+                    text = "Describe how you'd cook \"$recipeTitle\" — the AI will break it into precise steps",
                     style = MaterialTheme.typography.bodySmall,
                     color = AppColors.textTertiary()
                 )
                 Spacer(Modifier.height(16.dp))
 
                 OutlinedTextField(
-                    value = description,
-                    onValueChange = onDescriptionChange,
+                    value = aiDescription,
+                    onValueChange = onAiDescriptionChange,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp),
+                        .height(180.dp),
                     placeholder = {
                         Text(
-                            "e.g. Heat oil in a pan, sauté onions until golden, add tomatoes and spices, cook the gravy for 15 minutes, then add the marinated chicken pieces and simmer on low flame for 20 minutes…",
+                            "e.g. Heat oil in a pan, sauté onions until golden, add tomatoes and spices, cook the gravy for 15 minutes…",
                             style = MaterialTheme.typography.bodyMedium,
                             color = AppColors.textTertiary()
                         )
@@ -334,55 +250,57 @@ private fun InputStage(
                     ),
                     textStyle = MaterialTheme.typography.bodyLarge
                 )
+
+                Spacer(Modifier.height(16.dp))
+
+                PremiumButton(
+                    text = "✨ Generate Steps with AI",
+                    onClick = onGenerateSteps,
+                    enabled = aiDescription.isNotBlank()
+                )
             }
         }
 
         // Ingredient chips
         if (ingredientChips.isNotEmpty()) {
-            PremiumSectionHeader(title = "Ingredients")
+            PremiumSectionHeader(title = "Ingredients in this recipe")
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ingredientChips.forEach { name ->
-                    IngredientChip(name = name)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(AppColors.gold().copy(alpha = 0.1f))
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = name,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = AppColors.gold()
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        PremiumDivider()
 
-        // Generate button
-        PremiumButton(
-            text = "✨ Generate Steps with AI",
-            onClick = onGenerateSteps,
-            enabled = description.isNotBlank()
+        // Manual step button
+        PremiumOutlinedButton(
+            text = "➕ Add Steps Manually",
+            onClick = onAddManualStep
         )
 
         Spacer(Modifier.height(32.dp))
     }
 }
 
-@Composable
-private fun IngredientChip(name: String) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(AppColors.gold().copy(alpha = 0.1f))
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.labelMedium,
-            color = AppColors.gold()
-        )
-    }
-}
-
-// ── Stage 2: Loading ─────────────────────────────────────────
+// ── Loading Stage ────────────────────────────────────────────
 
 @Composable
-private fun LoadingStage(onCancel: () -> Unit) {
+private fun StepsLoadingStage(onCancel: () -> Unit) {
     val infiniteTransition = rememberInfiniteTransition(label = "loading_pulse")
     val alpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
@@ -407,17 +325,13 @@ private fun LoadingStage(onCancel: () -> Unit) {
                 .size(64.dp)
                 .alpha(alpha)
         )
-
         Spacer(Modifier.height(24.dp))
-
         CircularProgressIndicator(
             color = AppColors.gold(),
             strokeWidth = 3.dp,
             modifier = Modifier.size(48.dp)
         )
-
         Spacer(Modifier.height(24.dp))
-
         Text(
             text = "Chef AI is crafting your recipe…",
             style = MaterialTheme.typography.titleMedium,
@@ -425,113 +339,101 @@ private fun LoadingStage(onCancel: () -> Unit) {
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.alpha(alpha)
         )
-
         Spacer(Modifier.height(8.dp))
-
         Text(
             text = "Breaking down each step for precise cooking",
             style = MaterialTheme.typography.bodyMedium,
             color = AppColors.textTertiary(),
             textAlign = TextAlign.Center
         )
-
         Spacer(Modifier.height(32.dp))
-
         PremiumTextButton(text = "Cancel", onClick = onCancel)
     }
 }
 
-// ── Stage 3: Review & Edit ───────────────────────────────────
+// ── Review Stage ─────────────────────────────────────────────
 
 @Composable
-private fun ReviewStage(
+private fun StepsReviewStage(
     steps: List<RecipeStep>,
-    isSaving: Boolean,
+    recipeIngredients: List<RecipeIngredient>,
+    globalIngredients: List<GlobalIngredient>,
     onEditStep: (Int, RecipeStep) -> Unit,
     onDeleteStep: (Int) -> Unit,
     onMoveStepUp: (Int) -> Unit,
     onMoveStepDown: (Int) -> Unit,
     onAddManualStep: () -> Unit,
-    onSaveSteps: () -> Unit,
     onRetry: () -> Unit,
     onStepMediaSelected: (Int, Uri, String) -> Unit,
     onRemoveStepMedia: (Int) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Steps list
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "Review Steps",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = AppColors.textPrimary(),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "${steps.size} steps generated",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = AppColors.textTertiary()
-                        )
-                    }
-                    PremiumTextButton(
-                        text = "Regenerate",
-                        onClick = onRetry,
-                        color = AppColors.gold()
+    val globalMap = remember(globalIngredients) {
+        globalIngredients.associateBy { it.ingredientId }
+    }
+    // Build list of (id, name) pairs for the ingredient picker
+    val ingredientOptions = remember(recipeIngredients, globalMap) {
+        recipeIngredients.mapNotNull { ri ->
+            globalMap[ri.globalIngredientId]?.let { gi -> gi.ingredientId to gi.name }
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "Cooking Steps",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = AppColors.textPrimary(),
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${steps.size} step${if (steps.size != 1) "s" else ""}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AppColors.textTertiary()
                     )
                 }
-                Spacer(Modifier.height(8.dp))
-            }
-
-            itemsIndexed(steps) { index, step ->
-                EditableStepCard(
-                    step = step,
-                    index = index,
-                    totalSteps = steps.size,
-                    onEditStep = { updatedStep -> onEditStep(index, updatedStep) },
-                    onDeleteStep = { onDeleteStep(index) },
-                    onMoveUp = { onMoveStepUp(index) },
-                    onMoveDown = { onMoveStepDown(index) },
-                    onMediaSelected = { uri, type -> onStepMediaSelected(index, uri, type) },
-                    onRemoveMedia = { onRemoveStepMedia(index) }
+                PremiumTextButton(
+                    text = "Regenerate",
+                    onClick = onRetry,
+                    color = AppColors.gold()
                 )
             }
-
-            item {
-                Spacer(Modifier.height(8.dp))
-                PremiumOutlinedButton(
-                    text = "➕ Add Step Manually",
-                    onClick = onAddManualStep
-                )
-                Spacer(Modifier.height(16.dp))
-            }
+            Spacer(Modifier.height(8.dp))
         }
 
-        // Fixed bottom action bar
-        PremiumDivider()
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-        ) {
-            PremiumButton(
-                text = "Save Steps",
-                onClick = onSaveSteps,
-                isLoading = isSaving,
-                enabled = steps.isNotEmpty()
+        itemsIndexed(steps) { index, step ->
+            EditableStepCard(
+                step = step,
+                index = index,
+                totalSteps = steps.size,
+                ingredientOptions = ingredientOptions,
+                onEditStep = { updatedStep -> onEditStep(index, updatedStep) },
+                onDeleteStep = { onDeleteStep(index) },
+                onMoveUp = { onMoveStepUp(index) },
+                onMoveDown = { onMoveStepDown(index) },
+                onMediaSelected = { uri, type -> onStepMediaSelected(index, uri, type) },
+                onRemoveMedia = { onRemoveStepMedia(index) }
             )
+        }
+
+        item {
+            Spacer(Modifier.height(8.dp))
+            PremiumOutlinedButton(
+                text = "➕ Add Step Manually",
+                onClick = onAddManualStep
+            )
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -543,6 +445,7 @@ private fun EditableStepCard(
     step: RecipeStep,
     index: Int,
     totalSteps: Int,
+    ingredientOptions: List<Pair<String, String>>, // (globalIngredientId, name)
     onEditStep: (RecipeStep) -> Unit,
     onDeleteStep: () -> Unit,
     onMoveUp: () -> Unit,
@@ -559,34 +462,35 @@ private fun EditableStepCard(
         border = BorderStroke(0.5.dp, AppColors.border())
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header row: step badge + reorder + delete
+            // Header: step badge + type badge + reorder + delete
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Step number badge
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(AppColors.gold()),
-                    contentAlignment = Alignment.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "${step.stepNumber}",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = AppColors.onGold(),
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(AppColors.gold()),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${step.stepNumber}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = AppColors.onGold(),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    StepTypePill(stepType = step.stepType)
                 }
 
                 Row {
-                    // Move up
-                    IconButton(
-                        onClick = onMoveUp,
-                        enabled = index > 0
-                    ) {
+                    IconButton(onClick = onMoveUp, enabled = index > 0) {
                         Icon(
                             Icons.Default.KeyboardArrowUp,
                             contentDescription = "Move up",
@@ -595,12 +499,7 @@ private fun EditableStepCard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-
-                    // Move down
-                    IconButton(
-                        onClick = onMoveDown,
-                        enabled = index < totalSteps - 1
-                    ) {
+                    IconButton(onClick = onMoveDown, enabled = index < totalSteps - 1) {
                         Icon(
                             Icons.Default.KeyboardArrowDown,
                             contentDescription = "Move down",
@@ -609,8 +508,6 @@ private fun EditableStepCard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-
-                    // Delete
                     IconButton(onClick = onDeleteStep) {
                         Icon(
                             Icons.Default.Delete,
@@ -619,6 +516,42 @@ private fun EditableStepCard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // Step Type selector
+            StepTypeSelector(
+                currentType = step.stepType,
+                onTypeChange = { newType ->
+                    val updated = if (newType == "ACTION") {
+                        step.copy(stepType = newType, ingredientId = null, quantityMultiplier = 1.0)
+                    } else {
+                        step.copy(stepType = newType)
+                    }
+                    onEditStep(updated)
+                }
+            )
+
+            // Ingredient picker (for INGREDIENT and PREP types)
+            if (step.stepType == "INGREDIENT" || step.stepType == "PREP") {
+                Spacer(Modifier.height(8.dp))
+                IngredientPicker(
+                    selectedIngredientId = step.ingredientId,
+                    options = ingredientOptions,
+                    onIngredientSelected = { id ->
+                        onEditStep(step.copy(ingredientId = id))
+                    }
+                )
+
+                // Quantity multiplier (only for steps with an ingredient)
+                if (step.ingredientId != null) {
+                    Spacer(Modifier.height(8.dp))
+                    QuantityMultiplierRow(
+                        multiplier = step.quantityMultiplier,
+                        onMultiplierChange = { onEditStep(step.copy(quantityMultiplier = it)) }
+                    )
                 }
             }
 
@@ -631,7 +564,7 @@ private fun EditableStepCard(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = {
                     Text(
-                        "Enter cooking instruction…",
+                        "Enter cooking instruction (no quantities)…",
                         style = MaterialTheme.typography.bodyMedium,
                         color = AppColors.textTertiary()
                     )
@@ -647,46 +580,42 @@ private fun EditableStepCard(
                 maxLines = 6
             )
 
-            // Show details summary (flame, timer, cue)
+            // Detail chips (collapsed summary)
             val hasDetails = step.flameLevel != null ||
                     step.timerSeconds != null ||
                     step.expectedVisualCue != null
 
-            if (hasDetails || expanded) {
+            if (hasDetails && !expanded) {
                 Spacer(Modifier.height(8.dp))
-
-                if (!expanded) {
-                    // Collapsed: show summary chips
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        step.flameLevel?.let { flame ->
-                            DetailChip(
-                                icon = Icons.Default.LocalFireDepartment,
-                                text = flame.replaceFirstChar { it.uppercase() },
-                                onClick = { expanded = true }
-                            )
-                        }
-                        step.timerSeconds?.let { seconds ->
-                            val mins = seconds / 60
-                            val secs = seconds % 60
-                            val timeText = if (mins > 0) "${mins}m ${secs}s" else "${secs}s"
-                            DetailChip(
-                                icon = Icons.Default.Timer,
-                                text = timeText,
-                                onClick = { expanded = true }
-                            )
-                        }
-                        step.expectedVisualCue?.let {
-                            DetailChip(
-                                icon = Icons.Default.Visibility,
-                                text = "Visual cue",
-                                onClick = { expanded = true }
-                            )
-                        }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    step.flameLevel?.let { flame ->
+                        DetailChip(
+                            icon = Icons.Default.LocalFireDepartment,
+                            text = flame.replaceFirstChar { it.uppercase() },
+                            onClick = { expanded = true }
+                        )
+                    }
+                    step.timerSeconds?.let { seconds ->
+                        val mins = seconds / 60
+                        val secs = seconds % 60
+                        val timeText = if (mins > 0) "${mins}m ${secs}s" else "${secs}s"
+                        DetailChip(
+                            icon = Icons.Default.Timer,
+                            text = timeText,
+                            onClick = { expanded = true }
+                        )
+                    }
+                    step.expectedVisualCue?.let {
+                        DetailChip(
+                            icon = Icons.Default.Visibility,
+                            text = "Visual cue",
+                            onClick = { expanded = true }
+                        )
                     }
                 }
             }
 
-            // Expand/collapse button
+            // Expand/collapse
             TextButton(onClick = { expanded = !expanded }) {
                 Text(
                     text = if (expanded) "Hide details" else "Edit details",
@@ -701,19 +630,16 @@ private fun EditableStepCard(
                     PremiumDivider()
                     Spacer(Modifier.height(4.dp))
 
-                    // Flame level dropdown
                     FlameLevelSelector(
                         currentLevel = step.flameLevel,
                         onLevelChange = { onEditStep(step.copy(flameLevel = it)) }
                     )
 
-                    // Timer field
                     TimerField(
                         timerSeconds = step.timerSeconds,
                         onTimerChange = { onEditStep(step.copy(timerSeconds = it)) }
                     )
 
-                    // Visual cue field
                     OutlinedTextField(
                         value = step.expectedVisualCue ?: "",
                         onValueChange = {
@@ -740,7 +666,7 @@ private fun EditableStepCard(
                         singleLine = true
                     )
 
-                    // ── Step Media ────────────────────────
+                    // Step Media
                     PremiumDivider()
                     Text(
                         text = "Step Media",
@@ -750,7 +676,6 @@ private fun EditableStepCard(
                     )
 
                     if (!step.mediaUrl.isNullOrBlank()) {
-                        // Show media preview
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -758,7 +683,6 @@ private fun EditableStepCard(
                                 .clip(RoundedCornerShape(8.dp))
                         ) {
                             if (step.mediaType == "video") {
-                                // Video placeholder
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
@@ -788,7 +712,6 @@ private fun EditableStepCard(
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
-                            // Remove button
                             IconButton(
                                 onClick = onRemoveMedia,
                                 modifier = Modifier
@@ -807,10 +730,7 @@ private fun EditableStepCard(
                             }
                         }
                     } else {
-                        // Media picker buttons
-                        StepMediaPickerButtons(
-                            onMediaSelected = onMediaSelected
-                        )
+                        StepMediaPickerButtons(onMediaSelected = onMediaSelected)
                     }
                 }
             }
@@ -818,7 +738,7 @@ private fun EditableStepCard(
     }
 }
 
-// ── Step Media Picker ────────────────────────────────────────
+// ── Media Picker Buttons ─────────────────────────────────────
 
 @Composable
 private fun StepMediaPickerButtons(
@@ -840,7 +760,6 @@ private fun StepMediaPickerButtons(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Image picker button
         TextButton(
             onClick = {
                 imagePickerLauncher.launch(
@@ -866,7 +785,6 @@ private fun StepMediaPickerButtons(
             )
         }
 
-        // Video picker button
         TextButton(
             onClick = {
                 videoPickerLauncher.launch(
@@ -1050,111 +968,156 @@ private fun TimerField(
     }
 }
 
-// ── Previews ───────────────────────────────────────────────
+// ── Step Component Helpers ────────────────────────────────────
 
-@Preview(showBackground = true, showSystemUi = true)
-@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun InputStagePreview() {
-    SousChefTheme {
-        AiStepGenerationScreenLayout(
-            uiState = AiStepGenerationUiState(
-                recipeTitle = "Butter Chicken",
-                ingredientChips = listOf("Chicken", "Butter", "Tomatoes", "Cream", "Garam Masala", "Kasuri Methi"),
-                stage = AiStepGenerationUiState.Stage.INPUT
-            ),
-            onBack = {},
-            onDescriptionChange = {},
-            onGenerateSteps = {},
-            onCancelGeneration = {},
-            onEditStep = { _, _ -> },
-            onDeleteStep = {},
-            onMoveStepUp = {},
-            onMoveStepDown = {},
-            onAddManualStep = {},
-            onSaveSteps = {},
-            onRetry = {},
-            snackbarHostState = remember { SnackbarHostState() }
+private fun StepTypePill(stepType: String) {
+    val (emoji, label) = when (stepType.uppercase()) {
+        "INGREDIENT" -> "🥄" to "Ingredient"
+        "PREP" -> "✂️" to "Prep"
+        else -> "🔧" to "Action"
+    }
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(AppColors.gold().copy(alpha = 0.1f))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(text = emoji, style = MaterialTheme.typography.labelSmall)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = AppColors.gold(),
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun LoadingStagePreview() {
-    SousChefTheme {
-        AiStepGenerationScreenLayout(
-            uiState = AiStepGenerationUiState(
-                stage = AiStepGenerationUiState.Stage.LOADING,
-                isLoading = true
-            ),
-            onBack = {},
-            onDescriptionChange = {},
-            onGenerateSteps = {},
-            onCancelGeneration = {},
-            onEditStep = { _, _ -> },
-            onDeleteStep = {},
-            onMoveStepUp = {},
-            onMoveStepDown = {},
-            onAddManualStep = {},
-            onSaveSteps = {},
-            onRetry = {},
-            snackbarHostState = remember { SnackbarHostState() }
-        )
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun ReviewStagePreview() {
-    SousChefTheme {
-        AiStepGenerationScreenLayout(
-            uiState = AiStepGenerationUiState(
-                stage = AiStepGenerationUiState.Stage.REVIEW,
-                generatedSteps = listOf(
-                    RecipeStep(
-                        stepNumber = 1,
-                        instructionText = "Wash and pat dry the chicken thighs. Cut into bite-sized pieces.",
-                        flameLevel = null,
-                        timerSeconds = null
-                    ),
-                    RecipeStep(
-                        stepNumber = 2,
-                        instructionText = "In a large bowl, marinate the chicken with yogurt, turmeric, and red chili powder for at least 30 minutes.",
-                        flameLevel = null,
-                        timerSeconds = 1800,
-                        expectedVisualCue = "Chicken evenly coated with marinade"
-                    ),
-                    RecipeStep(
-                        stepNumber = 3,
-                        instructionText = "Heat butter in a heavy-bottomed pan over medium flame.",
-                        flameLevel = "medium",
-                        timerSeconds = 120,
-                        expectedVisualCue = "Butter melted and slightly foamy"
-                    ),
-                    RecipeStep(
-                        stepNumber = 4,
-                        instructionText = "Add the marinated chicken pieces and sear on high heat until golden brown.",
-                        flameLevel = "high",
-                        timerSeconds = 300,
-                        expectedVisualCue = "Golden brown crust on chicken"
-                    )
+private fun StepTypeSelector(
+    currentType: String,
+    onTypeChange: (String) -> Unit
+) {
+    val types = listOf("ACTION", "INGREDIENT", "PREP")
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(AppColors.cardBackground())
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        types.forEach { type ->
+            val isSelected = currentType.uppercase() == type
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(if (isSelected) AppColors.gold() else androidx.compose.ui.graphics.Color.Transparent)
+                    .clickable { onTypeChange(type) }
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = type.lowercase().replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isSelected) AppColors.onGold() else AppColors.textSecondary(),
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun IngredientPicker(
+    selectedIngredientId: String?,
+    options: List<Pair<String, String>>, // (id, name)
+    onIngredientSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedName = options.find { it.first == selectedIngredientId }?.second ?: "Select Ingredient"
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = selectedName,
+            onValueChange = {},
+            readOnly = true,
+            modifier = Modifier.fillMaxWidth().clickable { expanded = true },
+            label = { Text("Ingredient") },
+            trailingIcon = {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(
+                        if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = null
+                    )
+                }
+            },
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = AppColors.gold(),
+                unfocusedBorderColor = AppColors.border(),
+                disabledBorderColor = AppColors.border(),
+                disabledTextColor = AppColors.textPrimary(),
+                disabledLabelColor = AppColors.textSecondary(),
+                disabledTrailingIconColor = AppColors.textSecondary()
             ),
-            onBack = {},
-            onDescriptionChange = {},
-            onGenerateSteps = {},
-            onCancelGeneration = {},
-            onEditStep = { _, _ -> },
-            onDeleteStep = {},
-            onMoveStepUp = {},
-            onMoveStepDown = {},
-            onAddManualStep = {},
-            onSaveSteps = {},
-            onRetry = {},
-            snackbarHostState = remember { SnackbarHostState() }
+            enabled = false // Use clickable Box to open menu instead of focusing field
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.9f).background(AppColors.cardBackground())
+        ) {
+            options.forEach { (id, name) ->
+                DropdownMenuItem(
+                    text = { Text(name, color = AppColors.textPrimary()) },
+                    onClick = {
+                        onIngredientSelected(id)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuantityMultiplierRow(
+    multiplier: Double,
+    onMultiplierChange: (Double) -> Unit
+) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Portion used in this step",
+                style = MaterialTheme.typography.labelMedium,
+                color = AppColors.textSecondary()
+            )
+            Text(
+                text = "${(multiplier * 100).toInt()}%",
+                style = MaterialTheme.typography.labelMedium,
+                color = AppColors.gold(),
+                fontWeight = FontWeight.Bold
+            )
+        }
+        
+        Slider(
+            value = multiplier.toFloat(),
+            onValueChange = { onMultiplierChange((Math.round(it * 20.0) / 20.0)) }, // step by 0.05
+            valueRange = 0.05f..1f,
+            colors = SliderDefaults.colors(
+                thumbColor = AppColors.gold(),
+                activeTrackColor = AppColors.gold(),
+                inactiveTrackColor = AppColors.gold().copy(alpha = 0.2f)
+            )
         )
     }
 }

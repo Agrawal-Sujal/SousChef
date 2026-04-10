@@ -10,11 +10,23 @@ import com.souschef.model.recipe.ResolvedIngredient
  *
  * [adjustedIngredients] are the fully scaled + flavor-adjusted ingredient list
  * carried forward from phase 3 (RecipeOverview). Each step can reference a
- * subset of these via [RecipeStep.ingredientReferences].
+ * single ingredient via [RecipeStep.ingredientId].
+ *
+ * [stepIngredientMap] pre-resolves each step's ingredient with its
+ * step-specific quantity already multiplied by [RecipeStep.quantityMultiplier].
  */
 data class CookingModeUiState(
     val steps: List<RecipeStep> = emptyList(),
     val adjustedIngredients: List<ResolvedIngredient> = emptyList(),
+
+    /**
+     * Maps stepIndex → ResolvedIngredient with step-adjusted quantity.
+     * Only populated for steps that have an ingredientId.
+     * The quantity in the ResolvedIngredient is already multiplied by
+     * the step's quantityMultiplier.
+     */
+    val stepIngredientMap: Map<Int, ResolvedIngredient> = emptyMap(),
+
     val currentStepIndex: Int = 0,
     val timerMillisRemaining: Long = 0L,
     val isTimerRunning: Boolean = false,

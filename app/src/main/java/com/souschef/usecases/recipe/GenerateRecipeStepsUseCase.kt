@@ -13,11 +13,12 @@ import kotlinx.coroutines.flow.map
 
 /**
  * Generates atomic recipe steps from a description using AI, then resolves every
- * AI-generated ingredient name reference to a [GlobalIngredient.ingredientId] using
+ * AI-generated ingredient name to a [GlobalIngredient.ingredientId] using
  * [IngredientMatcher] (Dice-coefficient fuzzy match, ≥ 75% similarity).
  *
- * Unresolved names are preserved in [RecipeStep.unresolvedIngredientNames] so the
- * review UI can surface them as amber warnings for manual linking.
+ * Each step references at most **one** ingredient via [RecipeStep.ingredientId].
+ * Steps whose ingredient name cannot be resolved have their [ingredientId] set to null
+ * (the instruction text still mentions the ingredient by name for manual reference).
  */
 class GenerateRecipeStepsUseCase(
     private val aiRepository: AiRepository,
@@ -44,7 +45,7 @@ class GenerateRecipeStepsUseCase(
                             emptyList()
                         }
 
-                        val resolvedSteps = resolveIngredientReferences(
+                        val resolvedSteps = resolveIngredientIds(
                             steps = resource.data,
                             globalIngredients = allGlobalIngredients
                         )
@@ -57,31 +58,28 @@ class GenerateRecipeStepsUseCase(
     }
 
     /**
-     * For each step, splits [RecipeStep.ingredientReferences] (raw AI names) into:
-     * - **resolved** → matched → stored as `globalIngredientId` in [RecipeStep.ingredientReferences].
-     * - **unresolved** → no match → stored in [RecipeStep.unresolvedIngredientNames].
+     * For each step, resolves [RecipeStep.ingredientId] (which initially contains
+     * the raw AI-generated ingredient name) to an actual globalIngredientId via
+     * fuzzy matching.
+     *
+     * If no match is found, `ingredientId` is set to null — the step's instruction
+     * text still references the ingredient by name for the user.
      */
-    private fun resolveIngredientReferences(
+    private fun resolveIngredientIds(
         steps: List<RecipeStep>,
         globalIngredients: List<GlobalIngredient>
     ): List<RecipeStep> {
         return steps.map { step ->
-            val resolvedIds = mutableListOf<String>()
-            val unresolved = mutableListOf<String>()
-
-            for (rawName in step.ingredientReferences) {
+            val rawName = step.ingredientId // temporarily holds the name from AI
+            if (rawName.isNullOrBlank()) {
+                // ACTION step or no ingredient — leave as-is
+                step
+            } else {
                 val match = IngredientMatcher.fuzzyMatch(rawName, globalIngredients)
-                if (match != null) {
-                    resolvedIds += match.ingredientId
-                } else {
-                    unresolved += rawName
-                }
+                step.copy(
+                    ingredientId = match?.ingredientId // resolved ID or null
+                )
             }
-
-            step.copy(
-                ingredientReferences = resolvedIds,
-                unresolvedIngredientNames = unresolved
-            )
         }
     }
 }
