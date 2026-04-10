@@ -28,11 +28,15 @@ class GeminiRecipeService(
     @Serializable
     private data class GeminiStep(
         val stepNumber: Int = 0,
+        val stepType: String = "ACTION",
         val instructionText: String = "",
+        val ingredientName: String? = null,
+        val quantityMultiplier: Double = 1.0,
         val timerSeconds: Int? = null,
         val flameLevel: String? = null,
         val expectedVisualCue: String? = null,
-        val ingredientReferences: List<String> = emptyList()
+        // Legacy field — ignored for new steps, kept for lenient parsing
+        val ingredientReferences: List<String>? = null
     )
 
     private val json = Json {
@@ -84,15 +88,22 @@ class GeminiRecipeService(
             val geminiSteps: List<GeminiStep> = json.decodeFromString(cleaned)
 
             geminiSteps.map { step ->
+                val validStepType = step.stepType.uppercase().takeIf {
+                    it in listOf("INGREDIENT", "ACTION", "PREP")
+                } ?: "ACTION"
+
                 RecipeStep(
                     stepNumber = step.stepNumber,
+                    stepType = validStepType,
                     instructionText = step.instructionText,
+                    // ingredientName is a raw name — will be resolved to ID by use case
+                    ingredientId = step.ingredientName, // temporarily stores name, resolved later
+                    quantityMultiplier = step.quantityMultiplier.coerceIn(0.0, 1.0),
                     timerSeconds = step.timerSeconds,
                     flameLevel = step.flameLevel?.lowercase()?.takeIf {
                         it in listOf("low", "medium", "high")
                     },
-                    expectedVisualCue = step.expectedVisualCue,
-                    ingredientReferences = step.ingredientReferences
+                    expectedVisualCue = step.expectedVisualCue
                 )
             }.sortedBy { it.stepNumber }
         } catch (e: Exception) {

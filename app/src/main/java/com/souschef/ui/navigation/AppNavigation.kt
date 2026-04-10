@@ -33,8 +33,6 @@ import com.souschef.ui.screens.ingredient.addedit.AddEditIngredientScreen
 import com.souschef.ui.screens.ingredient.addedit.AddEditIngredientViewModel
 import com.souschef.ui.screens.ingredient.library.IngredientLibraryScreen
 import com.souschef.ui.screens.profile.ProfileScreen
-import com.souschef.ui.screens.recipe.aigeneration.AiStepGenerationScreen
-import com.souschef.ui.screens.recipe.aigeneration.AiStepGenerationViewModel
 import com.souschef.ui.screens.recipe.cooking.CookingModeScreen
 import com.souschef.ui.screens.recipe.cooking.CookingModeViewModel
 import com.souschef.ui.screens.recipe.create.CreateRecipeScreen
@@ -188,7 +186,7 @@ fun AppNavigation() {
                             backstack.add(Screens.NavRecipeOverviewRoute(recipeId))
                         },
                         onGenerateSteps = { recipeId ->
-                            backstack.add(Screens.NavAiStepGenerationRoute(recipeId))
+                            backstack.add(Screens.NavCreateRecipeRoute(recipeId = recipeId))
                         },
                         onCreateRecipe = {
                             backstack.add(Screens.NavCreateRecipeRoute())
@@ -209,7 +207,7 @@ fun AppNavigation() {
                             backstack.add(Screens.NavRecipeOverviewRoute(recipeId))
                         },
                         onGenerateSteps = { recipeId ->
-                            backstack.add(Screens.NavAiStepGenerationRoute(recipeId))
+                            backstack.add(Screens.NavCreateRecipeRoute(recipeId = recipeId))
                         },
                         onCreateRecipe = {
                             backstack.add(Screens.NavCreateRecipeRoute())
@@ -235,8 +233,8 @@ fun AppNavigation() {
                         onBack = { if (backstack.size > 1) backstack.removeAt(backstack.size - 1) },
                         onRecipeSaved = { recipeId ->
                             if (backstack.size > 1) backstack.removeAt(backstack.size - 1)
-                            // Navigate to AI step generation after recipe save
-                            backstack.add(Screens.NavAiStepGenerationRoute(recipeId))
+                            // Navigate directly to recipe overview (steps are saved as part of the wizard)
+                            backstack.add(Screens.NavRecipeOverviewRoute(recipeId))
                         },
                         viewModel = viewModel
                     )
@@ -338,20 +336,7 @@ fun AppNavigation() {
                     )
                 }
 
-                // ── AI Step Generation (Phase 6) ────────────────
-                entry<Screens.NavAiStepGenerationRoute> { route ->
-                    val viewModel: AiStepGenerationViewModel = koinInject {
-                        parametersOf(route.recipeId)
-                    }
-                    AiStepGenerationScreen(
-                        onBack = { if (backstack.size > 1) backstack.removeAt(backstack.size - 1) },
-                        onSaved = {
-                            if (backstack.size > 1) backstack.removeAt(backstack.size - 1)
-                            backstack.add(Screens.NavRecipeOverviewRoute(route.recipeId))
-                        },
-                        viewModel = viewModel
-                    )
-                }
+                // ── AI Step Generation (Phase 6) — now integrated into CreateRecipeRoute ──
 
                 // ── Admin (Phase 8) ──────────────────────────
                 entry<Screens.NavAdminRoute> { PlaceholderScreen("Admin Panel — Phase 8") }

@@ -78,7 +78,8 @@ internal fun Step2Ingredients(
     globalIngredients: List<GlobalIngredient>,
     ingredientError: String?,
     onAddIngredient: (RecipeIngredient) -> Unit,
-    onRemoveIngredient: (String) -> Unit
+    onRemoveIngredient: (String) -> Unit,
+    onCreateGlobalIngredient: (String, Double, String) -> Unit
 ) {
     var showBottomSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -218,6 +219,12 @@ internal fun Step2Ingredients(
                         showBottomSheet = false
                     }
                 },
+                onCreateGlobal = { name, quantity, unit ->
+                    onCreateGlobalIngredient(name, quantity, unit)
+                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+                        showBottomSheet = false
+                    }
+                },
                 onDismiss = {
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
                         showBottomSheet = false
@@ -296,6 +303,7 @@ private fun PickIngredientBottomSheet(
     globalIngredients: List<GlobalIngredient>,
     alreadyAdded: Set<String>,
     onSave: (RecipeIngredient) -> Unit,
+    onCreateGlobal: (String, Double, String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -333,7 +341,7 @@ private fun PickIngredientBottomSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (globalIngredients.isEmpty()) "No ingredients in the library yet.\nAdd some from the Ingredient Library screen."
+                        text = if (globalIngredients.isEmpty()) "No ingredients in the library yet.\nType a name to add it globally."
                                else "No matching ingredients found.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = AppColors.textTertiary(),
@@ -387,6 +395,17 @@ private fun PickIngredientBottomSheet(
                         }
                     }
                 }
+            }
+
+            if (searchQuery.isNotBlank() && filtered.none { it.name.equals(searchQuery, ignoreCase = true) }) {
+                PremiumOutlinedButton(
+                    text = "Add \"$searchQuery\" as new ingredient",
+                    onClick = {
+                        selectedIngredient = GlobalIngredient(ingredientId = "\$NEW\$", name = searchQuery, defaultUnit = "grams")
+                        selectedUnit = "grams"
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                )
             }
 
             Spacer(Modifier.height(8.dp))
@@ -462,13 +481,17 @@ private fun PickIngredientBottomSheet(
                             quantityError = "Enter a valid quantity"
                             return@PremiumButton
                         }
-                        onSave(
-                            RecipeIngredient(
-                                globalIngredientId = sel.ingredientId,
-                                quantity = qty,
-                                unit = selectedUnit
+                        if (sel.ingredientId == "\$NEW\$") {
+                            onCreateGlobal(sel.name, qty, selectedUnit)
+                        } else {
+                            onSave(
+                                RecipeIngredient(
+                                    globalIngredientId = sel.ingredientId,
+                                    quantity = qty,
+                                    unit = selectedUnit
+                                )
                             )
-                        )
+                        }
                     },
                     modifier = Modifier.weight(1f)
                 )

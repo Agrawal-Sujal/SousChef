@@ -12,6 +12,7 @@ import com.souschef.usecases.device.DispenseSpiceUseCase
 import com.souschef.usecases.recipe.CookingSessionUseCase
 import com.souschef.usecases.recipe.RecipeCalculationUseCase
 import com.souschef.util.Resource
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -51,6 +52,7 @@ class CookingModeViewModel(
     private val _error                  = MutableStateFlow<String?>(null)
     private val _steps                  = MutableStateFlow<List<RecipeStep>>(emptyList())
     private val _adjustedIngredients    = MutableStateFlow<List<ResolvedIngredient>>(emptyList())
+    private val _stepIngredientMap      = MutableStateFlow<Map<Int, ResolvedIngredient>>(emptyMap())
     private val _isFinished             = MutableStateFlow(false)
     private val _dispensingIds          = MutableStateFlow<Set<String>>(emptySet())
     private val _lastDispenseResult     = MutableStateFlow<DispenseResult?>(null)
@@ -82,8 +84,8 @@ class CookingModeViewModel(
         },
         bleDeviceManager.connectionState,
         _dispensingIds,
-        _lastDispenseResult
-    ) { base, timer, bleState, dispensingIds, lastResult ->
+        combine(_lastDispenseResult, _stepIngredientMap) { result, map -> result to map }
+    ) { base, timer, bleState, dispensingIds, resultAndMap ->
         base.copy(
             currentStepIndex    = timer.stepIndex,
             timerMillisRemaining = timer.millis,
@@ -91,7 +93,8 @@ class CookingModeViewModel(
             timerFinished       = timer.finished,
             connectionState     = bleState,
             dispensingIngredientIds = dispensingIds,
-            lastDispenseResult  = lastResult
+            lastDispenseResult  = resultAndMap.first,
+            stepIngredientMap   = resultAndMap.second
         )
     }.stateIn(
         scope        = viewModelScope,
@@ -158,12 +161,41 @@ class CookingModeViewModel(
             _steps.value     = sortedSteps
             _adjustedIngredients.value = adjusted
 
+            // Build per-step ingredient map with multiplied quantities
+            _stepIngredientMap.value = buildStepIngredientMap(sortedSteps, adjusted)
+
             val cookingSession = CookingSessionUseCase(sortedSteps, viewModelScope)
             session = cookingSession
             observeSessionFlows(cookingSession)
 
             _isLoading.value = false
         }
+    }
+
+    /**
+     * Builds a map from stepIndex → ResolvedIngredient for each step that
+     * references an ingredient. The quantity is already multiplied by the
+     * step's [RecipeStep.quantityMultiplier].
+     */
+    private fun buildStepIngredientMap(
+        steps: List<RecipeStep>,
+        adjustedIngredients: List<ResolvedIngredient>
+    ): Map<Int, ResolvedIngredient> {
+        val ingredientById = adjustedIngredients.associateBy { it.globalIngredientId }
+        val map = mutableMapOf<Int, ResolvedIngredient>()
+        steps.forEachIndexed { index, step ->
+            val ingId = step.effectiveIngredientId
+            if (ingId != null) {
+                val ingredient = ingredientById[ingId]
+                if (ingredient != null) {
+                    // Apply quantityMultiplier for step-specific amount
+                    val stepQty = (ingredient.quantity * step.quantityMultiplier * 10)
+                        .roundToInt() / 10.0
+                    map[index] = ingredient.copy(quantity = stepQty)
+                }
+            }
+        }
+        return map
     }
 
     private fun observeSessionFlows(s: CookingSessionUseCase) {

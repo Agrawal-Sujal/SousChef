@@ -263,7 +263,7 @@ fun CookingModeScreenLayout(
                 StepContent(
                     step = step,
                     stepIndex = stepIndex,
-                    adjustedIngredients = uiState.adjustedIngredients,
+                    stepIngredient = uiState.stepIngredientMap[stepIndex],
                     timerMillisRemaining = uiState.timerMillisRemaining,
                     isTimerRunning = uiState.isTimerRunning,
                     timerFinished = uiState.timerFinished,
@@ -341,7 +341,7 @@ private fun SegmentedProgressBar(
 private fun StepContent(
     step: RecipeStep,
     stepIndex: Int,
-    adjustedIngredients: List<ResolvedIngredient>,
+    stepIngredient: ResolvedIngredient?,
     timerMillisRemaining: Long,
     isTimerRunning: Boolean,
     timerFinished: Boolean,
@@ -361,8 +361,14 @@ private fun StepContent(
         // Main step card
         GlassCard {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // Step number badge
-                StepNumberBadge(stepNumber = stepIndex + 1)
+                // Step number badge + type indicator
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    StepNumberBadge(stepNumber = stepIndex + 1)
+                    StepTypeBadge(stepType = step.stepType)
+                }
 
                 // Instruction text
                 Text(
@@ -389,15 +395,19 @@ private fun StepContent(
             }
         }
 
-        // Ingredients for this step
-        val referencedIngredients = step.ingredientReferences.mapNotNull { refId ->
-            adjustedIngredients.find { it.globalIngredientId == refId }
-        }
-        if (referencedIngredients.isNotEmpty()) {
-            IngredientsForStep(
-                ingredients = referencedIngredients,
-                dispensingIds = dispensingIds,
-                onDispense = onDispense
+        // Ingredient card for this step (single ingredient with dynamic quantity)
+        if (stepIngredient != null) {
+            StepIngredientCard(
+                ingredient = stepIngredient,
+                isDispensing = dispensingIds.contains(stepIngredient.globalIngredientId),
+                onDispense = {
+                    onDispense(
+                        stepIngredient.globalIngredientId,
+                        stepIngredient.name,
+                        stepIngredient.quantity,
+                        stepIngredient.unit
+                    )
+                }
             )
         }
 
@@ -603,103 +613,117 @@ private fun VideoPlayerSection(videoUrl: String) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Ingredients for Step
+// Step Type Badge
 // ─────────────────────────────────────────────────────────────
 
 @Composable
-private fun IngredientsForStep(
-    ingredients: List<ResolvedIngredient>,
-    dispensingIds: Set<String>,
-    onDispense: (String, String, Double, String) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        PremiumSectionHeader(title = "You'll need:")
-
-        ingredients.forEach { ingredient ->
-            IngredientRow(
-                ingredient = ingredient,
-                isDispensing = dispensingIds.contains(ingredient.globalIngredientId),
-                onDispense = { onDispense(ingredient.globalIngredientId, ingredient.name, ingredient.quantity, ingredient.unit) }
-            )
-        }
+private fun StepTypeBadge(stepType: String) {
+    val (emoji, label) = when (stepType.uppercase()) {
+        "INGREDIENT" -> "🥄" to "Add Ingredient"
+        "PREP" -> "✂️" to "Preparation"
+        else -> "🔧" to "Action"
+    }
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(AppColors.gold().copy(alpha = 0.08f))
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(text = emoji, style = MaterialTheme.typography.labelSmall)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = AppColors.gold(),
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Single Ingredient Card for Step
+// ─────────────────────────────────────────────────────────────
+
 @Composable
-private fun IngredientRow(
+private fun StepIngredientCard(
     ingredient: ResolvedIngredient,
     isDispensing: Boolean,
     onDispense: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
-        ) {
-            if (ingredient.imageUrl != null) {
-                AsyncImage(
-                    model = ingredient.imageUrl,
-                    contentDescription = ingredient.name,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-            }
-            Text(
-                text = ingredient.name,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "${ingredient.quantity.toOneDecimalString()} ${ingredient.unit}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = AppColors.gold()
-            )
-        }
+    GlassCard {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            PremiumSectionHeader(title = "Ingredient")
 
-        if (ingredient.isDispensable) {
-            Spacer(modifier = Modifier.width(12.dp))
-            androidx.compose.material3.Button(
-                onClick = onDispense,
-                enabled = !isDispensing,
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = AppColors.gold().copy(alpha = 0.15f),
-                    contentColor = AppColors.gold()
-                ),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.height(36.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                if (isDispensing) {
-                    androidx.compose.material3.CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = AppColors.gold(),
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Icon(
-                        Icons.Outlined.Science,
-                        contentDescription = "Dispense",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Auto", style = MaterialTheme.typography.labelSmall)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (ingredient.imageUrl != null) {
+                        AsyncImage(
+                            model = ingredient.imageUrl,
+                            contentDescription = ingredient.name,
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(10.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
+                    Column {
+                        Text(
+                            text = ingredient.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "${ingredient.quantity.toOneDecimalString()} ${ingredient.unit}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.gold()
+                        )
+                    }
+                }
+
+                // Dispense button for dispensable ingredients
+                if (ingredient.isDispensable) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    androidx.compose.material3.Button(
+                        onClick = onDispense,
+                        enabled = !isDispensing,
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                            containerColor = AppColors.gold().copy(alpha = 0.15f),
+                            contentColor = AppColors.gold()
+                        ),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                            horizontal = 16.dp, vertical = 8.dp
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        if (isDispensing) {
+                            androidx.compose.material3.CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                color = AppColors.gold(),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                Icons.Outlined.Science,
+                                contentDescription = "Auto-dispense",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Dispense", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
                 }
             }
         }

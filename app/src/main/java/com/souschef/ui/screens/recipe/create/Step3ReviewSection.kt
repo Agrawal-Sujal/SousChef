@@ -34,7 +34,7 @@ import com.souschef.ui.theme.AppColors
 import com.souschef.ui.theme.CustomShapes
 
 // ─────────────────────────────────────────────────────────────
-// Step 3: Review & Save
+// Step 4: Review & Save (was Step 3 in old flow)
 // ─────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -87,6 +87,11 @@ internal fun Step3Review(
                 uiState.minServingSize?.let { ReviewRow("Min Servings", it.toString()) }
                 uiState.maxServingSize?.let { ReviewRow("Max Servings", it.toString()) }
                 ReviewRow("Ingredients", uiState.ingredients.size.toString())
+                ReviewRow(
+                    "Cooking Steps",
+                    if (uiState.steps.isNotEmpty()) "${uiState.steps.size} steps"
+                    else "None (you can add later)"
+                )
 
                 if (uiState.selectedTags.isNotEmpty()) {
                     Spacer(Modifier.height(12.dp))
@@ -122,19 +127,52 @@ internal fun Step3Review(
             }
         }
 
+        // Steps preview
+        if (uiState.steps.isNotEmpty()) {
+            PremiumSectionHeader(title = "Cooking Steps")
+            StandardCard {
+                Column {
+                    uiState.steps.forEachIndexed { index, step ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "${step.stepNumber}.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = AppColors.gold()
+                            )
+                            Text(
+                                text = step.instructionText,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = AppColors.textPrimary(),
+                                maxLines = 2
+                            )
+                        }
+                        if (index < uiState.steps.lastIndex) {
+                            PremiumDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                        }
+                    }
+                }
+            }
+        }
+
         Spacer(Modifier.height(8.dp))
 
         // Save buttons
         PremiumButton(
-            text = "✨ Save & Generate Steps (AI)",
+            text = "Save & Publish",
             onClick = { onSave(true) },
             isLoading = uiState.isLoading
         )
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(4.dp))
 
         PremiumOutlinedButton(
-            text = "Save without Steps",
+            text = "Save as Draft",
             onClick = { onSave(false) },
             isLoading = uiState.isLoading
         )
@@ -159,4 +197,3 @@ private fun ReviewRow(label: String, value: String) {
             color = AppColors.textPrimary())
     }
 }
-
