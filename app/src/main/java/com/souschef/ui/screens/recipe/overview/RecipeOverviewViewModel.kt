@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -42,76 +41,77 @@ class RecipeOverviewViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            val recipeResult = recipeRepository.getRecipeWithSteps(recipeId)
-                .first { it !is Resource.Loading }
+            // 1. Fetch recipe
+            recipeRepository.getRecipe(recipeId).collect { recipeResult ->
+                when (recipeResult) {
+                    is Resource.Loading -> { /* keep spinner */ }
+                    is Resource.Failure -> {
+                        _uiState.update {
+                            it.copy(isLoading = false, error = recipeResult.message ?: "Failed to load recipe")
+                        }
+                        return@collect
+                    }
+                    is Resource.Success -> {
+                        val recipe = recipeResult.data!!
 
-            if (recipeResult is Resource.Failure) {
-                _uiState.update {
-                    it.copy(isLoading = false, error = recipeResult.message ?: "Failed to load recipe")
+                        // 2. Fetch steps
+                        var steps = emptyList<com.souschef.model.recipe.RecipeStep>()
+                        recipeRepository.getSteps(recipeId).collect { stepsResult ->
+                            if (stepsResult is Resource.Success) {
+                                steps = stepsResult.data ?: emptyList()
+                            }
+                        }
+
+                        // 3. Resolve ingredients by joining with global library
+                        val ingredientIds = recipe.ingredients.map { it.globalIngredientId }
+                        if (ingredientIds.isEmpty()) {
+                            _uiState.update {
+                                it.copy(
+                                    recipe = recipe,
+                                    steps = steps,
+                                    selectedServings = recipe.baseServingSize,
+                                    resolvedIngredients = emptyList(),
+                                    adjustedIngredients = emptyList(),
+                                    isLoading = false
+                                )
+                            }
+                            return@collect
+                        }
+
+                        ingredientRepository.getIngredientsByIds(ingredientIds).collect { ingResult ->
+                            when (ingResult) {
+                                is Resource.Loading -> { /* wait */ }
+                                is Resource.Failure -> {
+                                    _uiState.update {
+                                        it.copy(isLoading = false, error = "Failed to load ingredients")
+                                    }
+                                }
+                                is Resource.Success -> {
+                                    val globalMap = (ingResult.data ?: emptyList())
+                                        .associateBy { it.ingredientId }
+                                    val resolved = recipe.ingredients.mapNotNull { ri ->
+                                        globalMap[ri.globalIngredientId]?.let { gi ->
+                                            ResolvedIngredient.from(ri, gi)
+                                        }
+                                    }
+                                    val adjusted = calculationUseCase.calculate(
+                                        resolved, recipe.baseServingSize, recipe.baseServingSize
+                                    )
+                                    _uiState.update {
+                                        it.copy(
+                                            recipe = recipe,
+                                            steps = steps,
+                                            selectedServings = recipe.baseServingSize,
+                                            resolvedIngredients = resolved,
+                                            adjustedIngredients = adjusted,
+                                            isLoading = false
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-                return@launch
-            }
-
-            val payload = (recipeResult as? Resource.Success)?.data
-            val recipe = payload?.first
-            val steps = payload?.second ?: emptyList()
-
-            if (recipe == null) {
-                _uiState.update { it.copy(isLoading = false, error = "Recipe not found") }
-                return@launch
-            }
-
-            val ingredientIds = recipe.ingredients.map { it.globalIngredientId }.distinct()
-            if (ingredientIds.isEmpty()) {
-                _uiState.update {
-                    it.copy(
-                        recipe = recipe,
-                        steps = steps,
-                        selectedServings = recipe.baseServingSize,
-                        resolvedIngredients = emptyList(),
-                        adjustedIngredients = emptyList(),
-                        isLoading = false
-                    )
-                }
-                return@launch
-            }
-
-            val ingredientResult = ingredientRepository.getIngredientsByIds(ingredientIds)
-                .first { it !is Resource.Loading }
-
-            if (ingredientResult is Resource.Failure) {
-                _uiState.update {
-                    it.copy(isLoading = false, error = ingredientResult.message ?: "Failed to load ingredients")
-                }
-                return@launch
-            }
-
-            val globalMap = ((ingredientResult as? Resource.Success)?.data ?: emptyList())
-                .associateBy { it.ingredientId }
-            val resolved = recipe.ingredients.mapNotNull { ri ->
-                globalMap[ri.globalIngredientId]?.let { gi ->
-                    ResolvedIngredient.from(ri, gi)
-                }
-            }
-
-            val adjusted = calculationUseCase.calculate(
-                ingredients = resolved,
-                baseServingSize = recipe.baseServingSize,
-                selectedServings = recipe.baseServingSize,
-                spiceLevel = 0f,
-                saltLevel = 0f,
-                sweetnessLevel = 0f
-            )
-
-            _uiState.update {
-                it.copy(
-                    recipe = recipe,
-                    steps = steps,
-                    selectedServings = recipe.baseServingSize,
-                    resolvedIngredients = resolved,
-                    adjustedIngredients = adjusted,
-                    isLoading = false
-                )
             }
         }
     }
