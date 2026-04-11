@@ -31,6 +31,7 @@ IMPORTANT: The user may give a brief description like "Kadhai Paneer" or a detai
 1. Identify ALL ingredients needed (including implicit ones like oil, water, salt, etc.)
 2. Provide realistic quantities for $baseServingSize servings — do NOT use placeholder values like 1.0 unless the real amount is actually 1 piece / 1 tsp / 1 cup
 3. Break the cooking process into precise, atomic steps
+4. There is no limit to number of steps — if the recipe is complex, it's better to have more steps than fewer. Each step should be a single, specific action.
 
 OUTPUT FORMAT — Return a single JSON object with two arrays:
 
