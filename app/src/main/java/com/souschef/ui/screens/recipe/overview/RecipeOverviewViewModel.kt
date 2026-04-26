@@ -2,6 +2,8 @@ package com.souschef.ui.screens.recipe.overview
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.souschef.model.ingredient.GlobalIngredient
+import com.souschef.model.recipe.RecipeIngredient
 import com.souschef.model.recipe.ResolvedIngredient
 import com.souschef.repository.ingredient.IngredientRepository
 import com.souschef.repository.recipe.RecipeRepository
@@ -56,18 +58,20 @@ class RecipeOverviewViewModel(
                         return@collect
                     }
                     is Resource.Success -> {
-                        val recipe = recipeResult.data!!
+                        val recipe = recipeResult.data
 
                         // 2. Fetch steps
                         var steps = emptyList<com.souschef.model.recipe.RecipeStep>()
                         recipeRepository.getSteps(recipeId).collect { stepsResult ->
-                            if (stepsResult is Resource.Success) {
-                                steps = stepsResult.data ?: emptyList()
-                            }
+                                if (stepsResult is Resource.Success) {
+                                    steps = stepsResult.data
+                                }
                         }
 
-                        // 3. Resolve ingredients by joining with global library
-                        val ingredientIds = recipe.ingredients.map { it.globalIngredientId }
+                        // 3. Resolve ingredients by globalIngredientId for display/calculation
+                        val recipeIngredients = recipe.ingredients.filter { it.globalIngredientId.isNotBlank() }
+                        val ingredientIds = recipeIngredients.map { it.globalIngredientId }.distinct()
+
                         if (ingredientIds.isEmpty()) {
                             _uiState.update {
                                 it.copy(
@@ -91,13 +95,17 @@ class RecipeOverviewViewModel(
                                     }
                                 }
                                 is Resource.Success -> {
-                                    val globalMap = (ingResult.data ?: emptyList())
-                                        .associateBy { it.ingredientId }
-                                    val resolved = recipe.ingredients.mapNotNull { ri ->
-                                        globalMap[ri.globalIngredientId]?.let { gi ->
-                                            ResolvedIngredient.from(ri, gi)
+                                    val globalMap = ingResult.data.associateBy { it.ingredientId }
+
+                                    val resolved = recipeIngredients.map { recipeIngredient ->
+                                        val globalIngredient = globalMap[recipeIngredient.globalIngredientId]
+                                        if (globalIngredient != null) {
+                                            ResolvedIngredient.from(recipeIngredient, globalIngredient)
+                                        } else {
+                                            fallbackResolvedIngredient(recipeIngredient, recipeIngredients, globalMap)
                                         }
                                     }
+
                                     val adjusted = calculationUseCase.calculate(
                                         resolved, recipe.baseServingSize, recipe.baseServingSize
                                     )
@@ -160,6 +168,26 @@ class RecipeOverviewViewModel(
             sweetnessLevel = state.sweetnessLevel
         )
         _uiState.update { it.copy(adjustedIngredients = adjusted) }
+    }
+
+    private fun fallbackResolvedIngredient(
+        recipeIngredient: RecipeIngredient,
+        allRecipeIngredients: List<RecipeIngredient>,
+        globalMap: Map<String, GlobalIngredient>
+    ): ResolvedIngredient {
+        val nearbyName = globalMap[recipeIngredient.globalIngredientId]?.name
+            ?: allRecipeIngredients.firstOrNull { it.globalIngredientId == recipeIngredient.globalIngredientId }
+                ?.globalIngredientId
+            ?: recipeIngredient.globalIngredientId
+
+        return ResolvedIngredient(
+            globalIngredientId = recipeIngredient.globalIngredientId,
+            name = nearbyName,
+            imageUrl = null,
+            quantity = recipeIngredient.quantity,
+            unit = recipeIngredient.unit,
+            perPersonQuantity = recipeIngredient.perPersonQuantity
+        )
     }
     // ── Actions ─────────────────────────────────────────────
 
